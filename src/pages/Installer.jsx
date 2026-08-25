@@ -21,7 +21,7 @@ export default function Installer({ onComplete }) {
     port: '3306',
     dbName: 'sree_manju_pharmacy',
     username: 'root',
-    password: ''
+    password: 'root'
   });
 
   const [companyConfig, setCompanyConfig] = useState({
