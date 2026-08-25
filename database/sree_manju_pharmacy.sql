@@ -20,10 +20,12 @@ CREATE TABLE IF NOT EXISTS business_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 2. Staff Members & User Accounts Table
+-- 2. Staff Members & User Accounts Table (Stores Staff, Owners, Passwords & Join Dates)
 CREATE TABLE IF NOT EXISTS staff_members (
     id BIGINT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
     role VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     phone VARCHAR(20),
@@ -31,7 +33,8 @@ CREATE TABLE IF NOT EXISTS staff_members (
     shift VARCHAR(100) DEFAULT 'General Shift',
     status VARCHAR(50) DEFAULT 'Active',
     join_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 3. Medicine Categories Table
