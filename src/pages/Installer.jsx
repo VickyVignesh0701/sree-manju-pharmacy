@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Database, Building2, UserCheck, CheckCircle2, ShieldCheck, Server, Eye, EyeOff, Sparkles, RefreshCw, ArrowRight, ArrowLeft, Mail, Send } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
@@ -66,6 +66,37 @@ export default function Installer({ onComplete }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+
+  // Live Step 2 Validation effect to ensure red highlights load immediately
+  useEffect(() => {
+    if (currentStep === 2) {
+      const errors = {};
+      if (!mailConfig.host.trim()) errors.mailHost = 'SMTP Host is required.';
+      if (!mailConfig.port.trim() || isNaN(mailConfig.port)) errors.mailPort = 'Valid SMTP Port is required (e.g. 587 or 465).';
+      
+      if (!mailConfig.username.trim()) {
+        errors.mailUsername = 'SMTP Username / Email is required.';
+      } else if (!isValidEmail(mailConfig.username)) {
+        errors.mailUsername = `Invalid email format! ("${mailConfig.username}" is not a valid email. Must be e.g. user@gmail.com).`;
+      }
+
+      if (!mailConfig.password.trim()) {
+        errors.mailPassword = 'SMTP Password / App Key is required.';
+      }
+
+      if (!mailConfig.fromAddress.trim()) {
+        errors.fromAddress = 'Sender From Address is required.';
+      } else if (!isValidEmail(mailConfig.fromAddress)) {
+        errors.fromAddress = `Invalid Sender Address! ("${mailConfig.fromAddress}" is not a valid email address).`;
+      }
+
+      if (!mailConfig.fromName.trim()) {
+        errors.fromName = 'Sender From Name is required.';
+      }
+
+      setFieldErrors(errors);
+    }
+  }, [currentStep, mailConfig.host, mailConfig.port, mailConfig.username, mailConfig.password, mailConfig.fromAddress, mailConfig.fromName]);
 
   // Step 1 Validation & Next (Database Link)
   const handleStep1Next = (e) => {
@@ -569,7 +600,7 @@ export default function Installer({ onComplete }) {
 
           {/* STEP 2: EMAIL & SMTP SETUP (Strict Form Validation) */}
           {currentStep === 2 && (
-            <form onSubmit={handleStep2Next} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form noValidate onSubmit={handleStep2Next} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Mail size={20} /> Email &amp; SMTP Notification Gateway Setup
@@ -579,25 +610,26 @@ export default function Installer({ onComplete }) {
                 </p>
               </div>
 
-              {/* Red Validation Warning Summary Banner */}
+              {/* Red Validation Warning Summary Banner - PLACED AT THE TOP */}
               {Object.keys(fieldErrors).length > 0 && (
                 <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #ef4444',
+                  backgroundColor: 'rgba(239, 68, 68, 0.18)',
+                  border: '2px solid #ef4444',
                   borderRadius: '10px',
                   padding: '14px 16px',
                   color: '#fca5a5',
                   fontSize: '13px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px'
+                  gap: '6px',
+                  boxShadow: '0 0 15px rgba(239, 68, 68, 0.25)'
                 }}>
                   <div style={{ fontWeight: '700', color: '#f87171', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    ⚠️ Step 2 Email &amp; Required Field Validation Errors ({Object.keys(fieldErrors).length} Issues):
+                    ⚠️ Step 2 Required Field Validation Errors ({Object.keys(fieldErrors).length} Issues):
                   </div>
                   <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
                     {Object.values(fieldErrors).map((err, idx) => (
-                      <li key={idx} style={{ color: '#fca5a5', fontSize: '12.5px', marginBottom: '2px' }}>{err}</li>
+                      <li key={idx} style={{ color: '#fca5a5', fontSize: '12.5px', marginBottom: '2px', fontWeight: '600' }}>{err}</li>
                     ))}
                   </ul>
                 </div>
@@ -619,7 +651,12 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Host *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailHost ? '#f87171' : '#cbd5e1' }}>
+                      SMTP Host <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.mailHost && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                  </div>
                   <input 
                     type="text" 
                     autoComplete="off"
@@ -627,13 +664,27 @@ export default function Installer({ onComplete }) {
                     onChange={(e) => handleMailConfigChange('host', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('host', e.target.value)}
                     placeholder="e.g. smtp.gmail.com or smtp.mailtrap.io"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailHost ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 14px', 
+                      borderRadius: '10px', 
+                      backgroundColor: fieldErrors.mailHost ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
+                      border: fieldErrors.mailHost ? '2px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailHost ? '#fca5a5' : '#f8fafc', 
+                      fontSize: '13px', 
+                      outline: 'none',
+                      boxShadow: fieldErrors.mailHost ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                    }}
                   />
-                  {fieldErrors.mailHost && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailHost}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Port *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailPort ? '#f87171' : '#cbd5e1' }}>
+                      SMTP Port <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.mailPort && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                  </div>
                   <input 
                     type="text" 
                     autoComplete="off"
@@ -641,9 +692,18 @@ export default function Installer({ onComplete }) {
                     onChange={(e) => handleMailConfigChange('port', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('port', e.target.value)}
                     placeholder="587 (TLS) or 465 (SSL)"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailPort ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 14px', 
+                      borderRadius: '10px', 
+                      backgroundColor: fieldErrors.mailPort ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
+                      border: fieldErrors.mailPort ? '2px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailPort ? '#fca5a5' : '#f8fafc', 
+                      fontSize: '13px', 
+                      outline: 'none',
+                      boxShadow: fieldErrors.mailPort ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                    }}
                   />
-                  {fieldErrors.mailPort && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailPort}</span>}
                 </div>
 
                 <div>
@@ -660,7 +720,12 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Username / Email *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailUsername ? '#f87171' : '#cbd5e1' }}>
+                      SMTP Username / Email <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.mailUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Invalid Email</span>}
+                  </div>
                   <input 
                     type="text" 
                     autoComplete="off"
@@ -668,13 +733,27 @@ export default function Installer({ onComplete }) {
                     onChange={(e) => handleMailConfigChange('username', e.target.value.toLowerCase())}
                     onBlur={(e) => handleMailConfigChange('username', e.target.value.toLowerCase())}
                     placeholder="e.g. notifications@sreemanjupharmacy.com or yourgmail@gmail.com"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailUsername ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 14px', 
+                      borderRadius: '10px', 
+                      backgroundColor: fieldErrors.mailUsername ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
+                      border: fieldErrors.mailUsername ? '2px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailUsername ? '#fca5a5' : '#f8fafc', 
+                      fontSize: '13px', 
+                      outline: 'none',
+                      boxShadow: fieldErrors.mailUsername ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                    }}
                   />
-                  {fieldErrors.mailUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailUsername}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Password / App Key *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailPassword ? '#f87171' : '#cbd5e1' }}>
+                      SMTP Password / App Key <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.mailPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                  </div>
                   <input 
                     type="password" 
                     autoComplete="new-password"
@@ -682,13 +761,27 @@ export default function Installer({ onComplete }) {
                     onChange={(e) => handleMailConfigChange('password', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('password', e.target.value)}
                     placeholder="Enter Gmail App Password or SMTP key"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailPassword ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 14px', 
+                      borderRadius: '10px', 
+                      backgroundColor: fieldErrors.mailPassword ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
+                      border: fieldErrors.mailPassword ? '2px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailPassword ? '#fca5a5' : '#f8fafc', 
+                      fontSize: '13px', 
+                      outline: 'none',
+                      boxShadow: fieldErrors.mailPassword ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                    }}
                   />
-                  {fieldErrors.mailPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailPassword}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Address *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.fromAddress ? '#f87171' : '#cbd5e1' }}>
+                      Sender From Address <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.fromAddress && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Invalid Email</span>}
+                  </div>
                   <input 
                     type="text" 
                     autoComplete="off"
@@ -696,13 +789,27 @@ export default function Installer({ onComplete }) {
                     onChange={(e) => handleMailConfigChange('fromAddress', e.target.value.toLowerCase())}
                     onBlur={(e) => handleMailConfigChange('fromAddress', e.target.value.toLowerCase())}
                     placeholder="e.g. noreply@sreemanjupharmacy.com or yourgmail@gmail.com"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.fromAddress ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 14px', 
+                      borderRadius: '10px', 
+                      backgroundColor: fieldErrors.fromAddress ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
+                      border: fieldErrors.fromAddress ? '2px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.fromAddress ? '#fca5a5' : '#f8fafc', 
+                      fontSize: '13px', 
+                      outline: 'none',
+                      boxShadow: fieldErrors.fromAddress ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                    }}
                   />
-                  {fieldErrors.fromAddress && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.fromAddress}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Name *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.fromName ? '#f87171' : '#cbd5e1' }}>
+                      Sender From Name <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.fromName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                  </div>
                   <input 
                     type="text" 
                     autoComplete="off"
@@ -710,9 +817,18 @@ export default function Installer({ onComplete }) {
                     onChange={(e) => handleMailConfigChange('fromName', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('fromName', e.target.value)}
                     placeholder="e.g. Sree Manju Pharmacy Notifications"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.fromName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 14px', 
+                      borderRadius: '10px', 
+                      backgroundColor: fieldErrors.fromName ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
+                      border: fieldErrors.fromName ? '2px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.fromName ? '#fca5a5' : '#f8fafc', 
+                      fontSize: '13px', 
+                      outline: 'none',
+                      boxShadow: fieldErrors.fromName ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                    }}
                   />
-                  {fieldErrors.fromName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.fromName}</span>}
                 </div>
               </div>
 
