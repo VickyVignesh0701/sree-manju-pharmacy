@@ -105,6 +105,10 @@ export default function Installer({ onComplete }) {
   // Step 2 Live Validation Helper
   const handleMailConfigChange = (field, value) => {
     const updated = { ...mailConfig, [field]: value };
+    // Auto-sync Sender From Address if empty or matched previous username
+    if (field === 'username' && (!mailConfig.fromAddress || mailConfig.fromAddress === mailConfig.username)) {
+      updated.fromAddress = value;
+    }
     setMailConfig(updated);
 
     const errors = { ...fieldErrors };
@@ -112,7 +116,7 @@ export default function Installer({ onComplete }) {
       if (!value.trim()) {
         errors.mailUsername = 'SMTP Username / Email is required.';
       } else if (!isValidEmail(value)) {
-        errors.mailUsername = 'Must be a valid email address (e.g. user@gmail.com).';
+        errors.mailUsername = `Invalid email format! ("${value}" is not a valid email address. Must be e.g. user@gmail.com).`;
       } else {
         delete errors.mailUsername;
       }
@@ -129,7 +133,7 @@ export default function Installer({ onComplete }) {
       if (!value.trim()) {
         errors.fromAddress = 'Sender From Address is required.';
       } else if (!isValidEmail(value)) {
-        errors.fromAddress = 'Must be a valid email address (e.g. noreply@domain.com).';
+        errors.fromAddress = `Invalid Sender Address! ("${value}" is not a valid email address).`;
       } else {
         delete errors.fromAddress;
       }
@@ -565,7 +569,7 @@ export default function Installer({ onComplete }) {
 
           {/* STEP 2: EMAIL & SMTP SETUP (Strict Form Validation) */}
           {currentStep === 2 && (
-            <form onSubmit={handleStep2Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleStep2Next} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Mail size={20} /> Email &amp; SMTP Notification Gateway Setup
@@ -574,6 +578,30 @@ export default function Installer({ onComplete }) {
                   Configure your outgoing mail server for automated chronic care refill alerts, password resets, and staff notices.
                 </p>
               </div>
+
+              {/* Red Validation Warning Summary Banner */}
+              {Object.keys(fieldErrors).length > 0 && (
+                <div style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid #ef4444',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  color: '#fca5a5',
+                  fontSize: '13px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}>
+                  <div style={{ fontWeight: '700', color: '#f87171', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    ⚠️ Step 2 Email &amp; Required Field Validation Errors ({Object.keys(fieldErrors).length} Issues):
+                  </div>
+                  <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
+                    {Object.values(fieldErrors).map((err, idx) => (
+                      <li key={idx} style={{ color: '#fca5a5', fontSize: '12.5px', marginBottom: '2px' }}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
@@ -594,6 +622,7 @@ export default function Installer({ onComplete }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Host *</label>
                   <input 
                     type="text" 
+                    autoComplete="off"
                     value={mailConfig.host}
                     onChange={(e) => handleMailConfigChange('host', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('host', e.target.value)}
@@ -607,6 +636,7 @@ export default function Installer({ onComplete }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Port *</label>
                   <input 
                     type="text" 
+                    autoComplete="off"
                     value={mailConfig.port}
                     onChange={(e) => handleMailConfigChange('port', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('port', e.target.value)}
@@ -633,6 +663,7 @@ export default function Installer({ onComplete }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Username / Email *</label>
                   <input 
                     type="text" 
+                    autoComplete="off"
                     value={mailConfig.username}
                     onChange={(e) => handleMailConfigChange('username', e.target.value.toLowerCase())}
                     onBlur={(e) => handleMailConfigChange('username', e.target.value.toLowerCase())}
@@ -646,6 +677,7 @@ export default function Installer({ onComplete }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Password / App Key *</label>
                   <input 
                     type="password" 
+                    autoComplete="new-password"
                     value={mailConfig.password}
                     onChange={(e) => handleMailConfigChange('password', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('password', e.target.value)}
@@ -659,6 +691,7 @@ export default function Installer({ onComplete }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Address *</label>
                   <input 
                     type="text" 
+                    autoComplete="off"
                     value={mailConfig.fromAddress}
                     onChange={(e) => handleMailConfigChange('fromAddress', e.target.value.toLowerCase())}
                     onBlur={(e) => handleMailConfigChange('fromAddress', e.target.value.toLowerCase())}
@@ -672,6 +705,7 @@ export default function Installer({ onComplete }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Name *</label>
                   <input 
                     type="text" 
+                    autoComplete="off"
                     value={mailConfig.fromName}
                     onChange={(e) => handleMailConfigChange('fromName', e.target.value)}
                     onBlur={(e) => handleMailConfigChange('fromName', e.target.value)}
