@@ -196,7 +196,7 @@ export default function Installer({ onComplete }) {
                 Sree Manju Pharmacy Setup
               </h1>
               <span style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                <Sparkles size={13} color="#38bdf8" /> Faveo-Style First-Time Web Installer
+                <Sparkles size={13} color="#38bdf8" /> First-Time System Setup Wizard
               </span>
             </div>
           </div>

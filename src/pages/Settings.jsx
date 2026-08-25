@@ -517,7 +517,7 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                ⚡ Re-Run System Installation Wizard (Faveo Web Installer)
+                ⚡ Re-Run System Installation Wizard
               </h3>
               <p style={{ fontSize: '12.5px', color: '#0c4a6e', marginTop: '4px', margin: 0 }}>
                 Re-configure your database host connection link, official company licenses, and primary owner admin credentials.
