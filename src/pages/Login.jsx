@@ -145,21 +145,8 @@ export default function Login() {
     }
     if (!regForm.mobile.trim()) {
       errors.mobile = 'Mobile Number is required.';
-    } else if (regForm.mobile.length < 10) {
-      errors.mobile = 'Enter a valid 10-digit mobile number.';
-    }
-    if (!regForm.password) {
-      errors.password = 'Password is required.';
-    } else {
-      const pwdCheck = validatePasswordComplexity(regForm.password);
-      if (!pwdCheck.isValid) {
-        errors.password = pwdCheck.error;
-      }
-    }
-    if (!regForm.confirmPassword) {
-      errors.confirmPassword = 'Confirm Password is required.';
-    } else if (regForm.password !== regForm.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match.';
+    } else if (regForm.mobile.length !== 10) {
+      errors.mobile = 'Mobile Number must be exactly 10 digits.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -171,11 +158,7 @@ export default function Login() {
       } else if (errors.email) {
         setRegError('Email Address is required! Please enter an email address.');
       } else if (errors.mobile) {
-        setRegError('Mobile Number is required! Please enter a mobile number.');
-      } else if (errors.password) {
-        setRegError(errors.password.includes('required') ? 'Password is required! Please enter a password.' : errors.password);
-      } else if (errors.confirmPassword) {
-        setRegError('Confirm Password is required! Please confirm your password.');
+        setRegError(errors.mobile);
       } else {
         setRegError('Required fields are missing! Please fill in all required fields.');
       }
@@ -183,14 +166,6 @@ export default function Login() {
     }
 
     setRegFieldErrors({});
-
-    // Complexity validation
-    const pwdCheck = validatePasswordComplexity(regForm.password);
-    if (!pwdCheck.isValid) {
-      setRegFieldErrors({ password: pwdCheck.error });
-      setRegError(pwdCheck.error);
-      return;
-    }
 
     if (regForm.role === 'primary_owner' || regForm.role === 'co_owner') {
       setRegStep(2);
@@ -228,21 +203,24 @@ export default function Login() {
   };
 
   const finalizeRegistration = () => {
+    const defaultPassword = 'Pharmacy@123';
+    const userPassword = regForm.password || defaultPassword;
+
     const result = registerUserAccount({
       role: regForm.role,
       firstName: regForm.firstName.trim(),
       lastName: regForm.lastName.trim(),
       email: regForm.email.trim(),
       mobile: regForm.mobile.trim(),
-      password: regForm.password
+      password: userPassword
     });
 
     if (result.success) {
       const fullName = `${regForm.firstName.trim()} ${regForm.lastName.trim()}`;
       setRole(regForm.role);
       setUsername(regForm.email.trim());
-      setPassword(regForm.password);
-      setResetSuccessBanner(`✅ Pharmacy setup & account registration complete for ${fullName}! Please sign in below.`);
+      setPassword(userPassword);
+      setResetSuccessBanner(`✅ Pharmacy setup & account registration complete for ${fullName}! Initial login password: ${userPassword} (Owner can update passwords in Staff Management).`);
       setRegStep(1);
       switchTab('login');
       setRegForm({
@@ -932,7 +910,8 @@ export default function Login() {
                       name="reg_mobile_number_field"
                       autoComplete="off"
                       className="form-input" 
-                      placeholder="Enter Mobile Number" 
+                      placeholder="Enter 10-Digit Mobile Number" 
+                      maxLength={10}
                       style={{ 
                         paddingLeft: '34px',
                         backgroundColor: regFieldErrors.mobile ? '#fff5f5' : '',
@@ -941,132 +920,14 @@ export default function Login() {
                       required
                       value={regForm.mobile}
                       onChange={(e) => {
-                        setRegForm({ ...regForm, mobile: e.target.value });
+                        const onlyNums = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setRegForm({ ...regForm, mobile: onlyNums });
                         if (regFieldErrors.mobile) setRegFieldErrors({ ...regFieldErrors, mobile: '' });
                       }}
                     />
                   </div>
                   {regFieldErrors.mobile && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.mobile}</span>}
                 </div>
-
-                {/* Password & Confirm */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Password *</label>
-                    <div style={{ position: 'relative' }}>
-                      <input 
-                        type={showRegPassword ? 'text' : 'password'} 
-                        name="reg_password_field"
-                        autoComplete="new-password"
-                        className="form-input" 
-                        placeholder="Password" 
-                        style={{ 
-                          paddingRight: '32px',
-                          backgroundColor: regFieldErrors.password ? '#fff5f5' : '',
-                          border: regFieldErrors.password ? '1px solid #fca5a5' : '' 
-                        }}
-                        required
-                        value={regForm.password}
-                        onChange={(e) => {
-                          setRegForm({ ...regForm, password: e.target.value });
-                          if (regFieldErrors.password) setRegFieldErrors({ ...regFieldErrors, password: '' });
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegPassword(!showRegPassword)}
-                        style={{
-                          position: 'absolute',
-                          right: '8px',
-                          top: '9px',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text-secondary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: 0
-                        }}
-                        title={showRegPassword ? 'Hide Password' : 'Show Password'}
-                      >
-                        {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    {regFieldErrors.password && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.password}</span>}
-                  </div>
-                  <div>
-                    <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Confirm Password *</label>
-                    <div style={{ position: 'relative' }}>
-                      <input 
-                        type={showRegConfirmPassword ? 'text' : 'password'} 
-                        name="reg_confirm_password_field"
-                        autoComplete="new-password"
-                        className="form-input" 
-                        placeholder="Confirm" 
-                        style={{ 
-                          paddingRight: '32px',
-                          backgroundColor: regFieldErrors.confirmPassword ? '#fff5f5' : '',
-                          border: regFieldErrors.confirmPassword ? '1px solid #fca5a5' : '' 
-                        }}
-                        required
-                        value={regForm.confirmPassword}
-                        onChange={(e) => {
-                          setRegForm({ ...regForm, confirmPassword: e.target.value });
-                          if (regFieldErrors.confirmPassword) setRegFieldErrors({ ...regFieldErrors, confirmPassword: '' });
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
-                        style={{
-                          position: 'absolute',
-                          right: '8px',
-                          top: '9px',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text-secondary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: 0
-                        }}
-                        title={showRegConfirmPassword ? 'Hide Password' : 'Show Password'}
-                      >
-                        {showRegConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    {regFieldErrors.confirmPassword && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.confirmPassword}</span>}
-                  </div>
-                </div>
-
-                {/* Live Password Requirements Checklist */}
-                {regForm.password && (
-                  <div style={{ backgroundColor: '#f8fafc', border: `1px solid ${passLengthOk && passUpperOk && passLowerOk && passNumberOk && passSpecialOk ? '#86efac' : '#fca5a5'}`, padding: '10px 12px', borderRadius: '8px', fontSize: '11.5px', animation: 'fadeIn 0.2s ease' }}>
-                    <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
-                      <span>🔒 Live Password Requirements Checklist:</span>
-                      <span style={{ fontSize: '11px', fontWeight: '700', color: passLengthOk ? '#16a34a' : '#dc2626' }}>
-                        {regForm.password.length} / 16 chars
-                      </span>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
-                      <span style={{ color: passLengthOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
-                        {passLengthOk ? '✓ 8-16 Length OK' : '✗ Need 8-16 Chars'}
-                      </span>
-                      <span style={{ color: passUpperOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
-                        {passUpperOk ? '✓ Uppercase (A-Z)' : '✗ Missing Uppercase'}
-                      </span>
-                      <span style={{ color: passLowerOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
-                        {passLowerOk ? '✓ Lowercase (a-z)' : '✗ Missing Lowercase'}
-                      </span>
-                      <span style={{ color: passNumberOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
-                        {passNumberOk ? '✓ Number (0-9)' : '✗ Missing Number'}
-                      </span>
-                      <span style={{ color: passSpecialOk ? '#16a34a' : '#dc2626', fontWeight: '700', gridColumn: 'span 2' }}>
-                        {passSpecialOk ? '✓ Special Char (!@#$%^&*)' : '✗ Missing Special Character'}
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '6px', padding: '11px', fontWeight: '700', fontSize: '14px', borderRadius: '8px' }}>
                   {regForm.role === 'staff' ? 'Complete Staff Registration' : 'Continue to Pharmacy Setup (Step 2/2) ➔'}

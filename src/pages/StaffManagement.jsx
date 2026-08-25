@@ -380,14 +380,18 @@ export default function StaffManagement() {
 
               <div className="grid grid-cols-2" style={{ gap: '16px' }}>
                 <div>
-                  <label className="form-label">Mobile Number *</label>
+                  <label className="form-label">Mobile Number (10 Digits) *</label>
                   <input 
                     type="tel" 
                     className="form-input" 
-                    placeholder="+91 98765 00000" 
+                    placeholder="Enter 10-Digit Mobile Number" 
+                    maxLength={10}
                     required
                     value={newStaff.phone}
-                    onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+                    onChange={(e) => {
+                      const onlyNums = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setNewStaff({ ...newStaff, phone: onlyNums });
+                    }}
                   />
                 </div>
 
