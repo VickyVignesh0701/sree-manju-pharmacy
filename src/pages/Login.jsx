@@ -823,17 +823,7 @@ export default function Login() {
             {regStep === 1 ? (
               <form onSubmit={handleUserRegistration} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 
-                {/* System Quota Badge Notice */}
-                <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px 12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Users size={14} color="#16a34a" /> STEP 1/2: OWNER &amp; STAFF CREDENTIALS
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px', display: 'flex', gap: '12px' }}>
-                    <span>• Primary Owner: <strong>{primaryOwnerCount}/1</strong></span>
-                    <span>• Co-Owner: <strong>{coOwnerCount}/1</strong></span>
-                    <span>• Staff: <strong>{staffCount} (Unlimited)</strong></span>
-                  </div>
-                </div>
+
 
                 {/* Registration Role Choice */}
                 <div>

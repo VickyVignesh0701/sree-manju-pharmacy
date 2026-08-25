@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { UserCheck, UserPlus, Search, Shield, Phone, Mail, Clock, CheckCircle, X, Key, Eye, EyeOff } from 'lucide-react';
+import { UserCheck, UserPlus, Search, Shield, Phone, Mail, Clock, CheckCircle, X, Key, Eye, EyeOff, Users } from 'lucide-react';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
 
 export default function StaffManagement() {
-  const { user, staffMembers, addStaffMember, toggleStaffStatus, updateStaffPassword } = useAppContext();
+  const { user, staffMembers, registeredUsers, addStaffMember, toggleStaffStatus, updateStaffPassword } = useAppContext();
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -100,6 +100,10 @@ export default function StaffManagement() {
     setConfirmPassword('');
   };
 
+  const primaryOwnerCount = (registeredUsers || []).filter(u => u.role === 'primary_owner' || u.role === 'owner').length || 1;
+  const coOwnerCount = (registeredUsers || []).filter(u => u.role === 'co_owner').length;
+  const staffCount = (staffMembers || []).length;
+
   return (
     <div className="staff-management-page animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header Card */}
@@ -117,6 +121,18 @@ export default function StaffManagement() {
         <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }} onClick={() => setShowModal(true)}>
           <UserPlus size={18} /> Register New Staff
         </button>
+      </div>
+
+      {/* System Quota Capacity Banner */}
+      <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px 18px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ fontSize: '13px', fontWeight: '700', color: '#15803d', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Users size={18} color="#16a34a" /> OWNER &amp; STAFF CREDENTIALS CAPACITY
+        </div>
+        <div style={{ fontSize: '13px', color: '#166534', fontWeight: '600', display: 'flex', gap: '20px' }}>
+          <span>• Primary Owner: <strong style={{ color: '#15803d' }}>{primaryOwnerCount}/1</strong></span>
+          <span>• Co-Owner: <strong style={{ color: '#15803d' }}>{coOwnerCount}/1</strong></span>
+          <span>• Staff: <strong style={{ color: '#15803d' }}>{staffCount} (Unlimited)</strong></span>
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
