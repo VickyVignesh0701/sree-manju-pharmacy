@@ -463,7 +463,7 @@ export const AppProvider = ({ children }) => {
 
   const [activityLogs, setActivityLogs] = useState(() => {
     const saved = localStorage.getItem('sree_manju_logs');
-    return saved ? JSON.parse(saved) : demoLogs;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const loadDemoData = () => {
@@ -517,29 +517,29 @@ export const AppProvider = ({ children }) => {
     showNotification('🧹 All system data & accounts erased! Redirected to registration.');
   };
 
-  // Inventory: Tracking by tablets to allow fractional strip sales
+  // Inventory: Clean empty array by default
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('sree_manju_inventory');
-    return saved ? JSON.parse(saved) : demoInventory;
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // Sales tracking
+  // Sales tracking: Clean empty array by default
   const [sales, setSales] = useState(() => {
     const saved = localStorage.getItem('sree_manju_sales');
-    return saved ? JSON.parse(saved) : demoSales;
+    return saved ? JSON.parse(saved) : [];
   });
   const [todaySalesAmount, setTodaySalesAmount] = useState(0);
 
-  // Patients / Customers
+  // Patients / Customers: Clean empty array by default
   const [patients, setPatients] = useState(() => {
     const saved = localStorage.getItem('sree_manju_patients');
-    return saved ? JSON.parse(saved) : demoPatients;
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // Regular / VIP Chronic Care Patients
+  // Regular / VIP Chronic Care Patients: Clean empty array by default
   const [regularPatients, setRegularPatients] = useState(() => {
     const saved = localStorage.getItem('sree_manju_regular_patients');
-    return saved ? JSON.parse(saved) : demoRegularPatients;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const addOrUpdateRegularPatient = (patientData) => {
@@ -573,15 +573,15 @@ export const AppProvider = ({ children }) => {
     logActivity(`Internal 25-Day Refill Alert Generated for Staff: ${patient.name}`);
   };
 
-  // Dealers tracking
+  // Dealers tracking: Clean empty array by default
   const [dealers, setDealers] = useState(() => {
     const saved = localStorage.getItem('sree_manju_dealers');
-    return saved ? JSON.parse(saved) : demoDealers;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [dealerOrders, setDealerOrders] = useState(() => {
     const saved = localStorage.getItem('sree_manju_dealer_orders');
-    return saved ? JSON.parse(saved) : demoDealerOrders;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [categories, setCategories] = useState(() => {
