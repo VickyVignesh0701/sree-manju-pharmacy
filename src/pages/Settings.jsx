@@ -3,7 +3,7 @@ import { Settings, Mail, Building, CheckCircle, Shield, Sliders, Send, Save, QrC
 import { useAppContext } from '../context/AppContext';
 
 export default function SettingsPage() {
-  const { user, showNotification, logActivity, clearAllData, loadDemoData } = useAppContext();
+  const { user, showNotification, logActivity, clearAllData, loadDemoData, reRunInstaller } = useAppContext();
   const [activeTab, setActiveTab] = useState('payment');
 
   // Payment & QR Code Settings State
@@ -508,6 +508,46 @@ export default function SettingsPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Installation Wizard Management Card */}
+      {(activeTab === 'preferences' || activeTab === 'all') && (
+        <div className="card" style={{ border: '1px solid #bae6fd', backgroundColor: '#f0f9ff', maxWidth: activeTab === 'preferences' ? '800px' : '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                ⚡ Re-Run System Installation Wizard (Faveo Web Installer)
+              </h3>
+              <p style={{ fontSize: '12.5px', color: '#0c4a6e', marginTop: '4px', margin: 0 }}>
+                Re-configure your database host connection link, official company licenses, and primary owner admin credentials.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Switch to Web Installation Wizard mode to re-configure database link and pharmacy details?")) {
+                  reRunInstaller();
+                }
+              }}
+              className="btn btn-outline"
+              style={{
+                borderColor: '#0284c7',
+                color: '#0284c7',
+                fontWeight: '700',
+                fontSize: '13px',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              ⚙️ Run Web Installer
+            </button>
+          </div>
         </div>
       )}
 

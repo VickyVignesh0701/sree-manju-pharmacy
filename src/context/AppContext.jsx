@@ -29,6 +29,18 @@ export const validatePasswordComplexity = (password) => {
 };
 
 export const AppProvider = ({ children }) => {
+  const [isInstalled, setIsInstalled] = useState(() => {
+    const savedInstalled = localStorage.getItem('sree_manju_installed');
+    if (savedInstalled !== null) {
+      try {
+        return JSON.parse(savedInstalled);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return false;
+  });
+
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('sree_manju_user');
     return saved ? JSON.parse(saved) : null;
@@ -1218,8 +1230,81 @@ export const AppProvider = ({ children }) => {
     return `${strips} ${pack}s, ${loose} ${unit}s`;
   };
 
+  const completeInstallation = (installData) => {
+    const { dbConfig, companyConfig, ownerConfig } = installData;
+
+    localStorage.setItem('sree_manju_db_config', JSON.stringify(dbConfig));
+
+    const businessSettings = {
+      pharmacyName: companyConfig.pharmacyName || 'Sree Manju Pharmacy',
+      dlNumber: companyConfig.dlNumber || 'DL-TN-102-123456',
+      gstin: companyConfig.gstin || '33AAAAA0000A1Z5',
+      phone: companyConfig.phone || '+91 98765 12345',
+      email: companyConfig.email || 'owner@sreemanjupharmacy.com',
+      address: companyConfig.address || '123 Health Street, Medical District, Chennai, Tamil Nadu 600001',
+      receiptFooter: `Thank you for choosing ${companyConfig.pharmacyName || 'Sree Manju Pharmacy'}! Get well soon.`
+    };
+    localStorage.setItem('sree_manju_business_settings', JSON.stringify(businessSettings));
+
+    const licenseSettings = {
+      dlNumber: companyConfig.dlNumber || 'DL-TN-102-123456',
+      dlExpiry: '2028-12-31',
+      gstin: companyConfig.gstin || '33AAAAA0000A1Z5',
+      pharmacistRegNo: companyConfig.pharmacistRegNo || 'PRN-2024-8890',
+      dlFile: 'Drug_License_Form20_21.pdf',
+      gstFile: 'GST_Registration_Certificate.pdf',
+      regFile: 'Pharmacy_Council_Registration.pdf'
+    };
+    localStorage.setItem('sree_manju_license_info', JSON.stringify(licenseSettings));
+
+    const fullName = `${ownerConfig.firstName.trim()} ${ownerConfig.lastName.trim()}`;
+    const ownerUser = {
+      id: Date.now(),
+      firstName: ownerConfig.firstName.trim(),
+      lastName: ownerConfig.lastName.trim(),
+      name: fullName,
+      email: ownerConfig.email.trim(),
+      mobile: ownerConfig.mobile.trim(),
+      password: ownerConfig.password,
+      role: 'primary_owner'
+    };
+
+    const updatedRegUsers = [ownerUser];
+    setRegisteredUsers(updatedRegUsers);
+    localStorage.setItem('sree_manju_registered_users', JSON.stringify(updatedRegUsers));
+
+    const newStaffMember = {
+      id: ownerUser.id,
+      name: fullName,
+      email: ownerConfig.email.trim(),
+      phone: ownerConfig.mobile.trim(),
+      role: 'Primary Owner',
+      status: 'Active',
+      password: ownerConfig.password,
+      shift: 'Full Day / General'
+    };
+
+    setStaffMembers([newStaffMember]);
+    localStorage.setItem('sree_manju_staff', JSON.stringify([newStaffMember]));
+
+    localStorage.setItem('sree_manju_installed', JSON.stringify(true));
+    setIsInstalled(true);
+
+    logActivity(`Completed First-Time Web Installer Setup for ${companyConfig.pharmacyName}`);
+    showNotification(`🎉 Web Installation Completed for ${companyConfig.pharmacyName}! Welcome page ready.`);
+  };
+
+  const reRunInstaller = () => {
+    localStorage.setItem('sree_manju_installed', JSON.stringify(false));
+    setIsInstalled(false);
+    showNotification('System reset to Installation Wizard mode.');
+  };
+
   return (
     <AppContext.Provider value={{
+      isInstalled,
+      completeInstallation,
+      reRunInstaller,
       user,
       login,
       logout,

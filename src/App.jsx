@@ -22,6 +22,7 @@ import StaffManagement from './pages/StaffManagement';
 import OwnerProfile from './pages/OwnerProfile';
 import SettingsPage from './pages/Settings';
 import Login from './pages/Login';
+import Installer from './pages/Installer';
 import { AppProvider, useAppContext } from './context/AppContext';
 import './index.css';
 
@@ -252,8 +253,12 @@ function DealerEmailModal() {
 }
 
 function MainApp() {
-  const { user } = useAppContext();
+  const { user, isInstalled } = useAppContext();
   const basename = window.location.pathname.includes('/pharmacy/sree-manju-pharmacy') ? '/pharmacy/sree-manju-pharmacy' : '/';
+
+  if (!isInstalled) {
+    return <Installer />;
+  }
 
   return (
     <BrowserRouter basename={basename}>
