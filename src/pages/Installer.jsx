@@ -102,6 +102,44 @@ export default function Installer({ onComplete }) {
     }, 1000);
   };
 
+  // Step 2 Live Validation Helper
+  const handleMailConfigChange = (field, value) => {
+    const updated = { ...mailConfig, [field]: value };
+    setMailConfig(updated);
+
+    const errors = { ...fieldErrors };
+    if (field === 'username') {
+      if (!value.trim()) {
+        errors.mailUsername = 'SMTP Username / Email is required.';
+      } else if (!isValidEmail(value)) {
+        errors.mailUsername = 'Must be a valid email address (e.g. user@gmail.com).';
+      } else {
+        delete errors.mailUsername;
+      }
+    } else if (field === 'host') {
+      if (!value.trim()) errors.mailHost = 'SMTP Host is required.';
+      else delete errors.mailHost;
+    } else if (field === 'port') {
+      if (!value.trim() || isNaN(value)) errors.mailPort = 'Valid SMTP Port is required (e.g. 587 or 465).';
+      else delete errors.mailPort;
+    } else if (field === 'password') {
+      if (!value.trim()) errors.mailPassword = 'SMTP Password / App Key is required.';
+      else delete errors.mailPassword;
+    } else if (field === 'fromAddress') {
+      if (!value.trim()) {
+        errors.fromAddress = 'Sender From Address is required.';
+      } else if (!isValidEmail(value)) {
+        errors.fromAddress = 'Must be a valid email address (e.g. noreply@domain.com).';
+      } else {
+        delete errors.fromAddress;
+      }
+    } else if (field === 'fromName') {
+      if (!value.trim()) errors.fromName = 'Sender From Name is required.';
+      else delete errors.fromName;
+    }
+    setFieldErrors(errors);
+  };
+
   // Step 2 Validation & Next (Email & SMTP Setup)
   const handleStep2Next = (e) => {
     e.preventDefault();
@@ -112,7 +150,7 @@ export default function Installer({ onComplete }) {
     if (!mailConfig.username.trim()) {
       errors.mailUsername = 'SMTP Username / Email is required.';
     } else if (!isValidEmail(mailConfig.username)) {
-      errors.mailUsername = 'Must be a valid email address (e.g. user@domain.com).';
+      errors.mailUsername = 'Must be a valid email address (e.g. user@gmail.com).';
     }
 
     if (!mailConfig.password.trim()) {
@@ -137,25 +175,39 @@ export default function Installer({ onComplete }) {
     setCurrentStep(3);
   };
 
-  // Step 2: Test Email / SMTP Connection
-  const handleTestEmail = () => {
-    if (!mailConfig.host || !mailConfig.username || !mailConfig.password) {
-      setMailStatus({ success: false, message: 'Please enter SMTP Host, Username, and Password to test connection.' });
+  // Step 2: Real SMTP Connection & Authentication Test via PHP
+  const handleTestEmail = async () => {
+    const errors = {};
+    if (!mailConfig.host.trim()) errors.mailHost = 'SMTP Host is required.';
+    if (!mailConfig.port.trim() || isNaN(mailConfig.port)) errors.mailPort = 'Valid SMTP Port is required (e.g. 587 or 465).';
+    if (!mailConfig.username.trim()) errors.mailUsername = 'SMTP Username / Email is required.';
+    else if (!isValidEmail(mailConfig.username)) errors.mailUsername = 'Must be a valid email address (e.g. user@gmail.com).';
+    if (!mailConfig.password.trim()) errors.mailPassword = 'SMTP Password / App Key is required.';
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setMailStatus({ success: false, message: 'Please fix highlighted field errors before testing connection.' });
       return;
     }
-    if (!isValidEmail(mailConfig.username)) {
-      setMailStatus({ success: false, message: 'Invalid SMTP Username! Please enter a valid email address (e.g. user@domain.com).' });
-      return;
-    }
+
     setMailTesting(true);
     setMailStatus(null);
-    setTimeout(() => {
+    try {
+      const response = await fetch('/pharmacy/sree-manju-pharmacy/api/smtp_mailer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test', ...mailConfig })
+      });
+      const data = await response.json();
+      setMailTesting(false);
+      setMailStatus({ success: data.success, message: data.message });
+    } catch (err) {
       setMailTesting(false);
       setMailStatus({
-        success: true,
-        message: `SMTP connection test passed for ${mailConfig.host}:${mailConfig.port} (${mailConfig.encryption.toUpperCase()}). Connection verified!`
+        success: false,
+        message: 'Could not connect to PHP backend mail gateway. Checked input values.'
       });
-    }, 1000);
+    }
   };
 
   // Step 3 Validation & Next (Company Details)
@@ -543,7 +595,8 @@ export default function Installer({ onComplete }) {
                   <input 
                     type="text" 
                     value={mailConfig.host}
-                    onChange={(e) => setMailConfig({ ...mailConfig, host: e.target.value })}
+                    onChange={(e) => handleMailConfigChange('host', e.target.value)}
+                    onBlur={(e) => handleMailConfigChange('host', e.target.value)}
                     placeholder="e.g. smtp.gmail.com or smtp.mailtrap.io"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailHost ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
@@ -555,7 +608,8 @@ export default function Installer({ onComplete }) {
                   <input 
                     type="text" 
                     value={mailConfig.port}
-                    onChange={(e) => setMailConfig({ ...mailConfig, port: e.target.value })}
+                    onChange={(e) => handleMailConfigChange('port', e.target.value)}
+                    onBlur={(e) => handleMailConfigChange('port', e.target.value)}
                     placeholder="587 (TLS) or 465 (SSL)"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailPort ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
@@ -578,10 +632,11 @@ export default function Installer({ onComplete }) {
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Username / Email *</label>
                   <input 
-                    type="email" 
+                    type="text" 
                     value={mailConfig.username}
-                    onChange={(e) => setMailConfig({ ...mailConfig, username: e.target.value.toLowerCase() })}
-                    placeholder="e.g. notifications@sreemanjupharmacy.com"
+                    onChange={(e) => handleMailConfigChange('username', e.target.value.toLowerCase())}
+                    onBlur={(e) => handleMailConfigChange('username', e.target.value.toLowerCase())}
+                    placeholder="e.g. notifications@sreemanjupharmacy.com or yourgmail@gmail.com"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailUsername ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.mailUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailUsername}</span>}
@@ -592,8 +647,9 @@ export default function Installer({ onComplete }) {
                   <input 
                     type="password" 
                     value={mailConfig.password}
-                    onChange={(e) => setMailConfig({ ...mailConfig, password: e.target.value })}
-                    placeholder="Enter SMTP password or App key"
+                    onChange={(e) => handleMailConfigChange('password', e.target.value)}
+                    onBlur={(e) => handleMailConfigChange('password', e.target.value)}
+                    placeholder="Enter Gmail App Password or SMTP key"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailPassword ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.mailPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailPassword}</span>}
@@ -602,10 +658,11 @@ export default function Installer({ onComplete }) {
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Address *</label>
                   <input 
-                    type="email" 
+                    type="text" 
                     value={mailConfig.fromAddress}
-                    onChange={(e) => setMailConfig({ ...mailConfig, fromAddress: e.target.value.toLowerCase() })}
-                    placeholder="e.g. noreply@sreemanjupharmacy.com"
+                    onChange={(e) => handleMailConfigChange('fromAddress', e.target.value.toLowerCase())}
+                    onBlur={(e) => handleMailConfigChange('fromAddress', e.target.value.toLowerCase())}
+                    placeholder="e.g. noreply@sreemanjupharmacy.com or yourgmail@gmail.com"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.fromAddress ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.fromAddress && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.fromAddress}</span>}
@@ -616,7 +673,8 @@ export default function Installer({ onComplete }) {
                   <input 
                     type="text" 
                     value={mailConfig.fromName}
-                    onChange={(e) => setMailConfig({ ...mailConfig, fromName: e.target.value })}
+                    onChange={(e) => handleMailConfigChange('fromName', e.target.value)}
+                    onBlur={(e) => handleMailConfigChange('fromName', e.target.value)}
                     placeholder="e.g. Sree Manju Pharmacy Notifications"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.fromName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
