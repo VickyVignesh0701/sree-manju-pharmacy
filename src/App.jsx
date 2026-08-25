@@ -253,15 +253,13 @@ function DealerEmailModal() {
 
 function MainApp() {
   const { user } = useAppContext();
-
-  if (!user) {
-    return <Login />;
-  }
-
   const basename = window.location.pathname.includes('/pharmacy/sree-manju-pharmacy') ? '/pharmacy/sree-manju-pharmacy' : '/';
 
   return (
-      <BrowserRouter basename={basename}>
+    <BrowserRouter basename={basename}>
+      {!user ? (
+        <Login />
+      ) : (
         <div className="app-container">
           <Sidebar />
           <main className="main-content">
@@ -292,7 +290,8 @@ function MainApp() {
             <DealerEmailModal />
           </main>
         </div>
-      </BrowserRouter>
+      )}
+    </BrowserRouter>
   );
 }
 

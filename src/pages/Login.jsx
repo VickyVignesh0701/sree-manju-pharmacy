@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
 import { Shield, User, Lock, Mail, Phone, KeyRound, UserPlus, CheckCircle2, ArrowLeft, Users, Eye, EyeOff, Sparkles, ArrowRight, Activity, HeartHandshake } from 'lucide-react';
 import logoImg from '../assets/logo.png';
@@ -6,7 +6,7 @@ import logoImg from '../assets/logo.png';
 export default function Login() {
   const { login, registerUserAccount, registeredUsers, updateUserPassword } = useAppContext();
   const [viewMode, setViewMode] = useState('welcome');
-  
+
   // Password Visibility Toggle States
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -19,7 +19,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Forgot & Reset Password State
   const [resetEmail, setResetEmail] = useState('');
   const [resetSent, setResetSent] = useState(false);
@@ -52,7 +52,27 @@ export default function Login() {
   const [loginFieldErrors, setLoginFieldErrors] = useState({});
   const [regFieldErrors, setRegFieldErrors] = useState({});
 
-  const switchTab = (mode) => {
+  useEffect(() => {
+    if (!window.history.state || !window.history.state.viewMode) {
+      window.history.replaceState({ viewMode: 'welcome' }, '', window.location.href);
+    }
+
+    const handlePopState = (e) => {
+      if (e.state && e.state.viewMode) {
+        setViewMode(e.state.viewMode);
+      } else {
+        setViewMode('welcome');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const switchTab = (mode, pushHistory = true) => {
+    if (pushHistory && mode !== viewMode) {
+      window.history.pushState({ viewMode: mode }, '', window.location.href);
+    }
     setViewMode(mode);
     setRegStep(1);
     setErrorMessage('');
@@ -524,7 +544,7 @@ export default function Login() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <button 
                 type="button"
-                onClick={() => setViewMode('welcome')}
+                onClick={() => switchTab('welcome')}
                 style={{
                   background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12.5px', fontWeight: '700',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0
