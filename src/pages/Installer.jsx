@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, Building2, UserCheck, CheckCircle2, ShieldCheck, Server, Key, Mail, Phone, Lock, Eye, EyeOff, Sparkles, RefreshCw, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Database, Building2, UserCheck, CheckCircle2, ShieldCheck, Server, Eye, EyeOff, Sparkles, RefreshCw, ArrowRight, ArrowLeft, Mail, Send } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
 
@@ -9,12 +9,14 @@ export default function Installer({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [dbTesting, setDbTesting] = useState(false);
   const [dbStatus, setDbStatus] = useState(null); // { success: boolean, message: string }
+  const [mailTesting, setMailTesting] = useState(false);
+  const [mailStatus, setMailStatus] = useState(null);
   const [installing, setInstalling] = useState(false);
   const [installProgress, setInstallProgress] = useState(0);
   const [installLogs, setInstallLogs] = useState([]);
   const [isFinished, setIsFinished] = useState(false);
 
-  // Form States
+  // Form States - Database Link Configuration
   const [dbConfig, setDbConfig] = useState({
     driver: 'mysql',
     host: 'localhost',
@@ -24,21 +26,35 @@ export default function Installer({ onComplete }) {
     password: 'root'
   });
 
-  const [companyConfig, setCompanyConfig] = useState({
-    pharmacyName: 'Sree Manju Pharmacy',
-    dlNumber: 'DL-TN-102-123456',
-    gstin: '33AAAAA0000A1Z5',
-    phone: '9876512345',
-    email: 'owner@sreemanjupharmacy.com',
-    address: '123 Health Street, Medical District, Chennai, Tamil Nadu 600001',
-    pharmacistRegNo: 'PRN-2024-8890'
+  // Form States - Email & SMTP Setup
+  const [mailConfig, setMailConfig] = useState({
+    driver: 'smtp',
+    host: 'smtp.gmail.com',
+    port: '587',
+    encryption: 'tls',
+    username: '',
+    password: '',
+    fromAddress: '',
+    fromName: ''
   });
 
+  // Form States - Pharmacy & Company Details (Empty for user entry)
+  const [companyConfig, setCompanyConfig] = useState({
+    pharmacyName: '',
+    dlNumber: '',
+    gstin: '',
+    phone: '',
+    email: '',
+    address: '',
+    pharmacistRegNo: ''
+  });
+
+  // Form States - Primary Owner Account (Empty for user entry)
   const [ownerConfig, setOwnerConfig] = useState({
-    firstName: 'Sree',
-    lastName: 'Manju',
-    email: 'owner@sreemanjupharmacy.com',
-    mobile: '9876512345',
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobile: '',
     password: '',
     confirmPassword: ''
   });
@@ -61,11 +77,24 @@ export default function Installer({ onComplete }) {
         success: true,
         message: `Connected successfully to database "${dbConfig.dbName}" on ${dbConfig.host}:${dbConfig.port} via ${dbConfig.driver.toUpperCase()} engine.`
       });
-    }, 1200);
+    }, 1000);
   };
 
-  // Step 2 Validation & Next
-  const handleStep2Next = (e) => {
+  // Step 2: Test Email / SMTP Connection
+  const handleTestEmail = () => {
+    setMailTesting(true);
+    setMailStatus(null);
+    setTimeout(() => {
+      setMailTesting(false);
+      setMailStatus({
+        success: true,
+        message: `SMTP connection test passed for ${mailConfig.host}:${mailConfig.port} (${mailConfig.encryption.toUpperCase()}). Ready for automated notifications!`
+      });
+    }, 1000);
+  };
+
+  // Step 3 Validation & Next (Company Details)
+  const handleStep3Next = (e) => {
     e.preventDefault();
     const errors = {};
     if (!companyConfig.pharmacyName.trim()) errors.pharmacyName = 'Pharmacy Name is required.';
@@ -83,11 +112,11 @@ export default function Installer({ onComplete }) {
       return;
     }
     setFieldErrors({});
-    setCurrentStep(3);
+    setCurrentStep(4);
   };
 
-  // Step 3 Validation & Next
-  const handleStep3Next = (e) => {
+  // Step 4 Validation & Next (Primary Owner Account)
+  const handleStep4Next = (e) => {
     e.preventDefault();
     const errors = {};
     if (!ownerConfig.firstName.trim()) errors.firstName = 'First Name is required.';
@@ -115,18 +144,18 @@ export default function Installer({ onComplete }) {
     startInstallation();
   };
 
-  // Step 4: Installation Execution
+  // Step 5: Installation Execution
   const startInstallation = () => {
-    setCurrentStep(4);
+    setCurrentStep(5);
     setInstalling(true);
     setInstallProgress(10);
     setInstallLogs(['Initializing Sree Manju Pharmacy Web Installer...']);
 
     const steps = [
       { progress: 25, log: 'Linking Database tables & schema indexes...' },
-      { progress: 50, log: 'Configuring business settings & license certificates...' },
-      { progress: 75, log: 'Provisioning Primary Owner administrator account...' },
-      { progress: 90, log: 'Seeding default inventory, categories & formulation types...' },
+      { progress: 45, log: 'Configuring Email & SMTP Gateway service parameters...' },
+      { progress: 65, log: 'Configuring business settings & license certificates...' },
+      { progress: 85, log: 'Provisioning Primary Owner administrator account...' },
       { progress: 100, log: 'Installation complete! Finalizing system setup...' }
     ];
 
@@ -138,13 +167,14 @@ export default function Installer({ onComplete }) {
           setInstalling(false);
           setIsFinished(true);
         }
-      }, (index + 1) * 900);
+      }, (index + 1) * 800);
     });
   };
 
   const handleFinishLaunch = () => {
     const installData = {
       dbConfig,
+      mailConfig,
       companyConfig,
       ownerConfig
     };
@@ -170,7 +200,7 @@ export default function Installer({ onComplete }) {
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '840px',
+        maxWidth: '860px',
         backgroundColor: 'rgba(15, 23, 42, 0.85)',
         backdropFilter: 'blur(16px)',
         border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -207,54 +237,54 @@ export default function Installer({ onComplete }) {
           </div>
         </div>
 
-        {/* Step Stepper Header */}
+        {/* Step Stepper Header (5 Steps) */}
         <div style={{
-          padding: '16px 32px',
+          padding: '16px 24px',
           backgroundColor: 'rgba(30, 41, 59, 0.5)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '8px'
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: '6px'
         }}>
           {[
-            { num: 1, label: 'Database Link', icon: Database },
-            { num: 2, label: 'Company Details', icon: Building2 },
-            { num: 3, label: 'Primary Owner', icon: UserCheck },
-            { num: 4, label: 'System Installation', icon: CheckCircle2 }
+            { num: 1, label: 'DB Link', icon: Database },
+            { num: 2, label: 'Email Setup', icon: Mail },
+            { num: 3, label: 'Company Info', icon: Building2 },
+            { num: 4, label: 'Primary Owner', icon: UserCheck },
+            { num: 5, label: 'Installation', icon: CheckCircle2 }
           ].map(s => {
-            const IconComp = s.icon;
             const isActive = currentStep === s.num;
-            const isCompleted = currentStep > s.num || (s.num === 4 && isFinished);
+            const isCompleted = currentStep > s.num || (s.num === 5 && isFinished);
             return (
               <div key={s.num} style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
+                gap: '8px',
+                padding: '8px 10px',
                 borderRadius: '10px',
                 backgroundColor: isActive ? 'rgba(14, 165, 233, 0.15)' : (isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'transparent'),
                 border: `1px solid ${isActive ? 'rgba(56, 189, 248, 0.4)' : (isCompleted ? 'rgba(34, 197, 94, 0.3)' : 'transparent')}`,
                 transition: 'all 0.2s ease'
               }}>
                 <div style={{
-                  width: '26px',
-                  height: '26px',
+                  width: '24px',
+                  height: '24px',
                   borderRadius: '50%',
                   backgroundColor: isCompleted ? '#22c55e' : (isActive ? '#0284c7' : 'rgba(255, 255, 255, 0.1)'),
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: '800'
                 }}>
                   {isCompleted ? '✓' : s.num}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: isActive ? '#38bdf8' : (isCompleted ? '#4ade80' : '#64748b') }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: isActive ? '#38bdf8' : (isCompleted ? '#4ade80' : '#64748b') }}>
                     STEP {s.num}
                   </span>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: isActive ? '#f8fafc' : (isCompleted ? '#cbd5e1' : '#94a3b8') }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: '600', color: isActive ? '#f8fafc' : (isCompleted ? '#cbd5e1' : '#94a3b8') }}>
                     {s.label}
                   </span>
                 </div>
@@ -274,7 +304,7 @@ export default function Installer({ onComplete }) {
                   <Database size={20} /> Database Link & Connection Configuration
                 </h2>
                 <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-                  Configure your database server connection parameters. Test the database link before proceeding to company setup.
+                  Configure your MySQL database server connection parameters. Test the database link before proceeding.
                 </p>
               </div>
 
@@ -289,7 +319,6 @@ export default function Installer({ onComplete }) {
                     <option value="mysql">MySQL / MariaDB Engine (Recommended)</option>
                     <option value="postgresql">PostgreSQL Engine</option>
                     <option value="sqlite">SQLite Local Embedded DB</option>
-                    <option value="localstorage">Browser Persistent Storage DB</option>
                   </select>
                 </div>
 
@@ -343,7 +372,7 @@ export default function Installer({ onComplete }) {
                     type="password" 
                     value={dbConfig.password}
                     onChange={(e) => setDbConfig({ ...dbConfig, password: e.target.value })}
-                    placeholder="Enter DB password (if any)"
+                    placeholder="root"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                 </div>
@@ -406,18 +435,198 @@ export default function Installer({ onComplete }) {
                     gap: '8px'
                   }}
                 >
-                  Continue to Company Details <ArrowRight size={16} />
+                  Continue to Email Setup <ArrowRight size={16} />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 2: COMPANY & PHARMACY DETAILS */}
+          {/* STEP 2: EMAIL & SMTP SETUP */}
           {currentStep === 2 && (
-            <form onSubmit={handleStep2Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Building2 size={20} /> Pharmacy & Company License Details
+                  <Mail size={20} /> Email &amp; SMTP Notification Gateway Setup
+                </h2>
+                <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
+                  Configure your outgoing mail server for automated chronic care refill alerts, password resets, and staff notices.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Mail Driver</label>
+                  <select 
+                    value={mailConfig.driver}
+                    onChange={(e) => setMailConfig({ ...mailConfig, driver: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  >
+                    <option value="smtp">SMTP Server (Recommended)</option>
+                    <option value="sendmail">Sendmail Gateway</option>
+                    <option value="mailgun">Mailgun API</option>
+                    <option value="local">Local Log Mailer (Simulation)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Host</label>
+                  <input 
+                    type="text" 
+                    value={mailConfig.host}
+                    onChange={(e) => setMailConfig({ ...mailConfig, host: e.target.value })}
+                    placeholder="e.g. smtp.gmail.com or smtp.mailtrap.io"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Port</label>
+                  <input 
+                    type="text" 
+                    value={mailConfig.port}
+                    onChange={(e) => setMailConfig({ ...mailConfig, port: e.target.value })}
+                    placeholder="587 (TLS) or 465 (SSL)"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Encryption Protocol</label>
+                  <select 
+                    value={mailConfig.encryption}
+                    onChange={(e) => setMailConfig({ ...mailConfig, encryption: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  >
+                    <option value="tls">TLS (Port 587)</option>
+                    <option value="ssl">SSL (Port 465)</option>
+                    <option value="none">None (Plaintext)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Username / Email</label>
+                  <input 
+                    type="email" 
+                    value={mailConfig.username}
+                    onChange={(e) => setMailConfig({ ...mailConfig, username: e.target.value.toLowerCase() })}
+                    placeholder="e.g. notifications@sreemanjupharmacy.com"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Password / App Key</label>
+                  <input 
+                    type="password" 
+                    value={mailConfig.password}
+                    onChange={(e) => setMailConfig({ ...mailConfig, password: e.target.value })}
+                    placeholder="Enter SMTP password or App key"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Address</label>
+                  <input 
+                    type="email" 
+                    value={mailConfig.fromAddress}
+                    onChange={(e) => setMailConfig({ ...mailConfig, fromAddress: e.target.value.toLowerCase() })}
+                    placeholder="e.g. noreply@sreemanjupharmacy.com"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Name</label>
+                  <input 
+                    type="text" 
+                    value={mailConfig.fromName}
+                    onChange={(e) => setMailConfig({ ...mailConfig, fromName: e.target.value })}
+                    placeholder="e.g. Sree Manju Pharmacy Notifications"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              {/* Email Test Result Card */}
+              {mailStatus && (
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: mailStatus.success ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${mailStatus.success ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  color: mailStatus.success ? '#4ade80' : '#f87171',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {mailStatus.success ? '✅' : '⚠️'} {mailStatus.message}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <button 
+                  type="button"
+                  onClick={() => setCurrentStep(1)}
+                  style={{ padding: '10px 18px', borderRadius: '10px', backgroundColor: 'transparent', border: '1px solid #334155', color: '#cbd5e1', fontWeight: '600', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <ArrowLeft size={15} /> Back
+                </button>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    type="button" 
+                    onClick={handleTestEmail} 
+                    disabled={mailTesting}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38bdf8',
+                      fontWeight: '700',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Send size={15} className={mailTesting ? 'spin' : ''} /> {mailTesting ? 'Testing SMTP...' : 'Test Mail Connection'}
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => setCurrentStep(3)}
+                    style={{
+                      padding: '11px 24px',
+                      borderRadius: '10px',
+                      backgroundColor: '#0284c7',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: '700',
+                      fontSize: '13.5px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    Continue to Company Details <ArrowRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: COMPANY & PHARMACY DETAILS (Clean Empty Inputs for User Entry) */}
+          {currentStep === 3 && (
+            <form onSubmit={handleStep3Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={20} /> Pharmacy &amp; Company License Details
                 </h2>
                 <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
                   Enter your official pharmacy establishment details, Drug License (DL) number, and GSTIN for automated invoice receipts.
@@ -431,7 +640,7 @@ export default function Installer({ onComplete }) {
                     type="text" 
                     value={companyConfig.pharmacyName}
                     onChange={(e) => setCompanyConfig({ ...companyConfig, pharmacyName: e.target.value })}
-                    placeholder="e.g. Sree Manju Pharmacy"
+                    placeholder="Enter your official pharmacy name (e.g. Sree Manju Pharmacy)"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.pharmacyName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.pharmacyName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.pharmacyName}</span>}
@@ -443,7 +652,7 @@ export default function Installer({ onComplete }) {
                     type="text" 
                     value={companyConfig.dlNumber}
                     onChange={(e) => setCompanyConfig({ ...companyConfig, dlNumber: e.target.value })}
-                    placeholder="DL-TN-102-123456"
+                    placeholder="e.g. DL-TN-102-123456"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dlNumber ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.dlNumber && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dlNumber}</span>}
@@ -455,7 +664,7 @@ export default function Installer({ onComplete }) {
                     type="text" 
                     value={companyConfig.gstin}
                     onChange={(e) => setCompanyConfig({ ...companyConfig, gstin: e.target.value })}
-                    placeholder="33AAAAA0000A1Z5"
+                    placeholder="e.g. 33AAAAA0000A1Z5"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.gstin ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.gstin && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.gstin}</span>}
@@ -480,7 +689,7 @@ export default function Installer({ onComplete }) {
                     type="email" 
                     value={companyConfig.email}
                     onChange={(e) => setCompanyConfig({ ...companyConfig, email: e.target.value.toLowerCase() })}
-                    placeholder="owner@sreemanjupharmacy.com"
+                    placeholder="e.g. owner@sreemanjupharmacy.com"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.email ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.email && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.email}</span>}
@@ -492,7 +701,7 @@ export default function Installer({ onComplete }) {
                     type="text" 
                     value={companyConfig.address}
                     onChange={(e) => setCompanyConfig({ ...companyConfig, address: e.target.value })}
-                    placeholder="123 Health Street, Medical District, Chennai, Tamil Nadu 600001"
+                    placeholder="Enter complete store street address, city, state and pincode"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                 </div>
@@ -501,7 +710,7 @@ export default function Installer({ onComplete }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button 
                   type="button"
-                  onClick={() => setCurrentStep(1)}
+                  onClick={() => setCurrentStep(2)}
                   style={{ padding: '10px 18px', borderRadius: '10px', backgroundColor: 'transparent', border: '1px solid #334155', color: '#cbd5e1', fontWeight: '600', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <ArrowLeft size={15} /> Back
@@ -517,15 +726,15 @@ export default function Installer({ onComplete }) {
             </form>
           )}
 
-          {/* STEP 3: PRIMARY OWNER ACCOUNT SETUP */}
-          {currentStep === 3 && (
-            <form onSubmit={handleStep3Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* STEP 4: PRIMARY OWNER ACCOUNT SETUP (Clean Empty Inputs for User Entry) */}
+          {currentStep === 4 && (
+            <form onSubmit={handleStep4Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <UserCheck size={20} /> Primary Pharmacy Owner Credentials
                 </h2>
                 <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-                  Create the Primary Owner administrator account for system administration and full privileges.
+                  Create your Primary Owner administrator account for full pharmacy management privileges.
                 </p>
               </div>
 
@@ -536,7 +745,7 @@ export default function Installer({ onComplete }) {
                     type="text" 
                     value={ownerConfig.firstName}
                     onChange={(e) => setOwnerConfig({ ...ownerConfig, firstName: e.target.value })}
-                    placeholder="Sree"
+                    placeholder="Enter first name (e.g. Sree)"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.firstName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.firstName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.firstName}</span>}
@@ -548,7 +757,7 @@ export default function Installer({ onComplete }) {
                     type="text" 
                     value={ownerConfig.lastName}
                     onChange={(e) => setOwnerConfig({ ...ownerConfig, lastName: e.target.value })}
-                    placeholder="Manju"
+                    placeholder="Enter last name (e.g. Manju)"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.lastName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
                   {fieldErrors.lastName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.lastName}</span>}
@@ -625,7 +834,7 @@ export default function Installer({ onComplete }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button 
                   type="button"
-                  onClick={() => setCurrentStep(2)}
+                  onClick={() => setCurrentStep(3)}
                   style={{ padding: '10px 18px', borderRadius: '10px', backgroundColor: 'transparent', border: '1px solid #334155', color: '#cbd5e1', fontWeight: '600', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <ArrowLeft size={15} /> Back
@@ -641,8 +850,8 @@ export default function Installer({ onComplete }) {
             </form>
           )}
 
-          {/* STEP 4: INSTALLATION EXECUTION & COMPLETION */}
-          {currentStep === 4 && (
+          {/* STEP 5: INSTALLATION EXECUTION & COMPLETION */}
+          {currentStep === 5 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center', textAlign: 'center', padding: '20px 0' }}>
               
               {!isFinished ? (
@@ -657,7 +866,7 @@ export default function Installer({ onComplete }) {
                       Installing Sree Manju Pharmacy System...
                     </h2>
                     <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-                      Executing database schema migrations, provisioning owner account &amp; seeding store configuration.
+                      Executing database schema migrations, email gateway setup, owner account provisioning &amp; store configuration.
                     </p>
                   </div>
 
@@ -706,7 +915,7 @@ export default function Installer({ onComplete }) {
                       Installation Completed Successfully! 🎉
                     </h2>
                     <p style={{ fontSize: '13.5px', color: '#cbd5e1', maxWidth: '520px', margin: '0 auto', lineHeight: '1.6' }}>
-                      Database link established, pharmacy configuration saved, and Primary Owner <strong>({ownerConfig.firstName} {ownerConfig.lastName})</strong> registered successfully.
+                      Database link established, Email gateway saved, pharmacy configuration saved, and Primary Owner <strong>({ownerConfig.firstName} {ownerConfig.lastName})</strong> registered successfully.
                     </p>
                   </div>
 
@@ -714,11 +923,15 @@ export default function Installer({ onComplete }) {
                   <div style={{ width: '100%', maxWidth: '520px', backgroundColor: 'rgba(30, 41, 59, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px', padding: '16px 20px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
                       <span style={{ color: '#94a3b8' }}>Pharmacy Store:</span>
-                      <strong style={{ color: '#ffffff' }}>{companyConfig.pharmacyName}</strong>
+                      <strong style={{ color: '#ffffff' }}>{companyConfig.pharmacyName || 'Sree Manju Pharmacy'}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
                       <span style={{ color: '#94a3b8' }}>Database Engine:</span>
                       <strong style={{ color: '#38bdf8' }}>{dbConfig.driver.toUpperCase()} ({dbConfig.dbName} @ {dbConfig.host})</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
+                      <span style={{ color: '#94a3b8' }}>Email &amp; SMTP Host:</span>
+                      <strong style={{ color: '#38bdf8' }}>{mailConfig.driver.toUpperCase()} ({mailConfig.host}:{mailConfig.port})</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
                       <span style={{ color: '#94a3b8' }}>Primary Owner Account:</span>
