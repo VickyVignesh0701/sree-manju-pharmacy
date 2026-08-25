@@ -668,16 +668,16 @@ export default function Installer({ onComplete }) {
                       width: '100%', 
                       padding: '10px 14px', 
                       borderRadius: '10px', 
-                      backgroundColor: fieldErrors.mailHost ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
-                      border: fieldErrors.mailHost ? '2px solid #ef4444' : '1px solid #334155', 
-                      color: fieldErrors.mailHost ? '#fca5a5' : '#f8fafc', 
+                      backgroundColor: fieldErrors.mailHost ? '#451a1a' : '#1e293b', 
+                      border: fieldErrors.mailHost ? '3px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailHost ? '#f87171' : '#f8fafc', 
                       fontSize: '13px', 
                       outline: 'none',
-                      boxShadow: fieldErrors.mailHost ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                      boxShadow: fieldErrors.mailHost ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
                   {fieldErrors.mailHost && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
                       ⚠️ {fieldErrors.mailHost}
                     </div>
                   )}
@@ -701,16 +701,16 @@ export default function Installer({ onComplete }) {
                       width: '100%', 
                       padding: '10px 14px', 
                       borderRadius: '10px', 
-                      backgroundColor: fieldErrors.mailPort ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
-                      border: fieldErrors.mailPort ? '2px solid #ef4444' : '1px solid #334155', 
-                      color: fieldErrors.mailPort ? '#fca5a5' : '#f8fafc', 
+                      backgroundColor: fieldErrors.mailPort ? '#451a1a' : '#1e293b', 
+                      border: fieldErrors.mailPort ? '3px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailPort ? '#f87171' : '#f8fafc', 
                       fontSize: '13px', 
                       outline: 'none',
-                      boxShadow: fieldErrors.mailPort ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                      boxShadow: fieldErrors.mailPort ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
                   {fieldErrors.mailPort && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
                       ⚠️ {fieldErrors.mailPort}
                     </div>
                   )}
@@ -747,16 +747,16 @@ export default function Installer({ onComplete }) {
                       width: '100%', 
                       padding: '10px 14px', 
                       borderRadius: '10px', 
-                      backgroundColor: fieldErrors.mailUsername ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
-                      border: fieldErrors.mailUsername ? '2px solid #ef4444' : '1px solid #334155', 
-                      color: fieldErrors.mailUsername ? '#fca5a5' : '#f8fafc', 
+                      backgroundColor: fieldErrors.mailUsername ? '#451a1a' : '#1e293b', 
+                      border: fieldErrors.mailUsername ? '3px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailUsername ? '#f87171' : '#f8fafc', 
                       fontSize: '13px', 
                       outline: 'none',
-                      boxShadow: fieldErrors.mailUsername ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                      boxShadow: fieldErrors.mailUsername ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
                   {fieldErrors.mailUsername && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
                       ⚠️ {fieldErrors.mailUsername}
                     </div>
                   )}
@@ -780,16 +780,16 @@ export default function Installer({ onComplete }) {
                       width: '100%', 
                       padding: '10px 14px', 
                       borderRadius: '10px', 
-                      backgroundColor: fieldErrors.mailPassword ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
-                      border: fieldErrors.mailPassword ? '2px solid #ef4444' : '1px solid #334155', 
-                      color: fieldErrors.mailPassword ? '#fca5a5' : '#f8fafc', 
+                      backgroundColor: fieldErrors.mailPassword ? '#451a1a' : '#1e293b', 
+                      border: fieldErrors.mailPassword ? '3px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.mailPassword ? '#f87171' : '#f8fafc', 
                       fontSize: '13px', 
                       outline: 'none',
-                      boxShadow: fieldErrors.mailPassword ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                      boxShadow: fieldErrors.mailPassword ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
                   {fieldErrors.mailPassword && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
                       ⚠️ {fieldErrors.mailPassword}
                     </div>
                   )}
@@ -813,16 +813,16 @@ export default function Installer({ onComplete }) {
                       width: '100%', 
                       padding: '10px 14px', 
                       borderRadius: '10px', 
-                      backgroundColor: fieldErrors.fromAddress ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
-                      border: fieldErrors.fromAddress ? '2px solid #ef4444' : '1px solid #334155', 
-                      color: fieldErrors.fromAddress ? '#fca5a5' : '#f8fafc', 
+                      backgroundColor: fieldErrors.fromAddress ? '#451a1a' : '#1e293b', 
+                      border: fieldErrors.fromAddress ? '3px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.fromAddress ? '#f87171' : '#f8fafc', 
                       fontSize: '13px', 
                       outline: 'none',
-                      boxShadow: fieldErrors.fromAddress ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                      boxShadow: fieldErrors.fromAddress ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
                   {fieldErrors.fromAddress && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
                       ⚠️ {fieldErrors.fromAddress}
                     </div>
                   )}
@@ -846,16 +846,16 @@ export default function Installer({ onComplete }) {
                       width: '100%', 
                       padding: '10px 14px', 
                       borderRadius: '10px', 
-                      backgroundColor: fieldErrors.fromName ? 'rgba(239, 68, 68, 0.15)' : '#1e293b', 
-                      border: fieldErrors.fromName ? '2px solid #ef4444' : '1px solid #334155', 
-                      color: fieldErrors.fromName ? '#fca5a5' : '#f8fafc', 
+                      backgroundColor: fieldErrors.fromName ? '#451a1a' : '#1e293b', 
+                      border: fieldErrors.fromName ? '3px solid #ef4444' : '1px solid #334155', 
+                      color: fieldErrors.fromName ? '#f87171' : '#f8fafc', 
                       fontSize: '13px', 
                       outline: 'none',
-                      boxShadow: fieldErrors.fromName ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                      boxShadow: fieldErrors.fromName ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
                   {fieldErrors.fromName && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.12)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
                       ⚠️ {fieldErrors.fromName}
                     </div>
                   )}
