@@ -451,7 +451,7 @@ export default function Installer({ onComplete }) {
 
           {/* STEP 1: DATABASE LINK */}
           {currentStep === 1 && (
-            <form onSubmit={handleStep1Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleStep1Next} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Database size={20} /> Database Link & Connection Configuration
@@ -460,6 +460,25 @@ export default function Installer({ onComplete }) {
                   Configure your MySQL database server connection parameters. Test the database link before proceeding.
                 </p>
               </div>
+
+              {/* Database Test Result Card - PLACED AT THE TOP */}
+              {dbStatus && (
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: dbStatus.success ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.18)',
+                  border: `2px solid ${dbStatus.success ? '#22c55e' : '#ef4444'}`,
+                  color: dbStatus.success ? '#4ade80' : '#fca5a5',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: dbStatus.success ? 'none' : '0 0 15px rgba(239, 68, 68, 0.25)'
+                }}>
+                  {dbStatus.success ? '✅' : '⚠️'} {dbStatus.message}
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
@@ -476,83 +495,105 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Host *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.dbHost ? '#f87171' : '#cbd5e1' }}>
+                      Database Host <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.dbHost && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.dbHost}
+                      </span>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     value={dbConfig.host}
                     onChange={(e) => setDbConfig({ ...dbConfig, host: e.target.value })}
                     placeholder="localhost or 127.0.0.1"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbHost ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: fieldErrors.dbHost ? '#451a1a' : '#1e293b', border: fieldErrors.dbHost ? '3px solid #ef4444' : '1px solid #334155', color: fieldErrors.dbHost ? '#f87171' : '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
-                  {fieldErrors.dbHost && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbHost}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Port *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.dbPort ? '#f87171' : '#cbd5e1' }}>
+                      Database Port <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.dbPort && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.dbPort}
+                      </span>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     value={dbConfig.port}
                     onChange={(e) => setDbConfig({ ...dbConfig, port: e.target.value })}
                     placeholder="3306"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbPort ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: fieldErrors.dbPort ? '#451a1a' : '#1e293b', border: fieldErrors.dbPort ? '3px solid #ef4444' : '1px solid #334155', color: fieldErrors.dbPort ? '#f87171' : '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
-                  {fieldErrors.dbPort && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbPort}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Name *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.dbName ? '#f87171' : '#cbd5e1' }}>
+                      Database Name <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.dbName && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.dbName}
+                      </span>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     value={dbConfig.dbName}
                     onChange={(e) => setDbConfig({ ...dbConfig, dbName: e.target.value })}
                     placeholder="sree_manju_pharmacy"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: fieldErrors.dbName ? '#451a1a' : '#1e293b', border: fieldErrors.dbName ? '3px solid #ef4444' : '1px solid #334155', color: fieldErrors.dbName ? '#f87171' : '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
-                  {fieldErrors.dbName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbName}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database User *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.dbUsername ? '#f87171' : '#cbd5e1' }}>
+                      Database User <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.dbUsername && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.dbUsername}
+                      </span>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     value={dbConfig.username}
                     onChange={(e) => setDbConfig({ ...dbConfig, username: e.target.value })}
                     placeholder="root"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbUsername ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: fieldErrors.dbUsername ? '#451a1a' : '#1e293b', border: fieldErrors.dbUsername ? '3px solid #ef4444' : '1px solid #334155', color: fieldErrors.dbUsername ? '#f87171' : '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
-                  {fieldErrors.dbUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbUsername}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Password *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.dbPassword ? '#f87171' : '#cbd5e1' }}>
+                      Database Password <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
+                    </label>
+                    {fieldErrors.dbPassword && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.dbPassword}
+                      </span>
+                    )}
+                  </div>
                   <input 
                     type="password" 
                     value={dbConfig.password}
                     onChange={(e) => setDbConfig({ ...dbConfig, password: e.target.value })}
                     placeholder="root"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbPassword ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: fieldErrors.dbPassword ? '#451a1a' : '#1e293b', border: fieldErrors.dbPassword ? '3px solid #ef4444' : '1px solid #334155', color: fieldErrors.dbPassword ? '#f87171' : '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
-                  {fieldErrors.dbPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbPassword}</span>}
                 </div>
               </div>
-
-              {/* Database Test Result Card */}
-              {dbStatus && (
-                <div style={{
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  backgroundColor: dbStatus.success ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                  border: `1px solid ${dbStatus.success ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                  color: dbStatus.success ? '#4ade80' : '#f87171',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {dbStatus.success ? '✅' : '⚠️'} {dbStatus.message}
-                </div>
-              )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button 
@@ -635,6 +676,25 @@ export default function Installer({ onComplete }) {
                 </div>
               )}
 
+              {/* Email Test Result Card - PLACED AT THE TOP */}
+              {mailStatus && (
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: mailStatus.success ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.18)',
+                  border: `2px solid ${mailStatus.success ? '#22c55e' : '#ef4444'}`,
+                  color: mailStatus.success ? '#4ade80' : '#fca5a5',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: mailStatus.success ? 'none' : '0 0 15px rgba(239, 68, 68, 0.25)'
+                }}>
+                  {mailStatus.success ? '✅' : '⚠️'} {mailStatus.message}
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Mail Driver</label>
@@ -655,7 +715,11 @@ export default function Installer({ onComplete }) {
                     <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailHost ? '#f87171' : '#cbd5e1' }}>
                       SMTP Host <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
                     </label>
-                    {fieldErrors.mailHost && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                    {fieldErrors.mailHost && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.mailHost}
+                      </span>
+                    )}
                   </div>
                   <input 
                     type="text" 
@@ -676,11 +740,6 @@ export default function Installer({ onComplete }) {
                       boxShadow: fieldErrors.mailHost ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
-                  {fieldErrors.mailHost && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                      ⚠️ {fieldErrors.mailHost}
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -688,7 +747,11 @@ export default function Installer({ onComplete }) {
                     <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailPort ? '#f87171' : '#cbd5e1' }}>
                       SMTP Port <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
                     </label>
-                    {fieldErrors.mailPort && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                    {fieldErrors.mailPort && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.mailPort}
+                      </span>
+                    )}
                   </div>
                   <input 
                     type="text" 
@@ -709,11 +772,6 @@ export default function Installer({ onComplete }) {
                       boxShadow: fieldErrors.mailPort ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
-                  {fieldErrors.mailPort && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                      ⚠️ {fieldErrors.mailPort}
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -734,7 +792,11 @@ export default function Installer({ onComplete }) {
                     <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailUsername ? '#f87171' : '#cbd5e1' }}>
                       SMTP Username / Email <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
                     </label>
-                    {fieldErrors.mailUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Invalid Email</span>}
+                    {fieldErrors.mailUsername && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.mailUsername}
+                      </span>
+                    )}
                   </div>
                   <input 
                     type="text" 
@@ -755,11 +817,6 @@ export default function Installer({ onComplete }) {
                       boxShadow: fieldErrors.mailUsername ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
-                  {fieldErrors.mailUsername && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                      ⚠️ {fieldErrors.mailUsername}
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -767,7 +824,11 @@ export default function Installer({ onComplete }) {
                     <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.mailPassword ? '#f87171' : '#cbd5e1' }}>
                       SMTP Password / App Key <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
                     </label>
-                    {fieldErrors.mailPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                    {fieldErrors.mailPassword && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.mailPassword}
+                      </span>
+                    )}
                   </div>
                   <input 
                     type="password" 
@@ -788,11 +849,6 @@ export default function Installer({ onComplete }) {
                       boxShadow: fieldErrors.mailPassword ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
-                  {fieldErrors.mailPassword && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                      ⚠️ {fieldErrors.mailPassword}
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -800,7 +856,11 @@ export default function Installer({ onComplete }) {
                     <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.fromAddress ? '#f87171' : '#cbd5e1' }}>
                       Sender From Address <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
                     </label>
-                    {fieldErrors.fromAddress && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Invalid Email</span>}
+                    {fieldErrors.fromAddress && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.fromAddress}
+                      </span>
+                    )}
                   </div>
                   <input 
                     type="text" 
@@ -821,11 +881,6 @@ export default function Installer({ onComplete }) {
                       boxShadow: fieldErrors.fromAddress ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
-                  {fieldErrors.fromAddress && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                      ⚠️ {fieldErrors.fromAddress}
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -833,7 +888,11 @@ export default function Installer({ onComplete }) {
                     <label style={{ fontSize: '12px', fontWeight: '600', color: fieldErrors.fromName ? '#f87171' : '#cbd5e1' }}>
                       Sender From Name <span style={{ color: '#ef4444', fontWeight: '700' }}>*</span>
                     </label>
-                    {fieldErrors.fromName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700' }}>⚠️ Required</span>}
+                    {fieldErrors.fromName && (
+                      <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(239, 68, 68, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>
+                        ⚠️ {fieldErrors.fromName}
+                      </span>
+                    )}
                   </div>
                   <input 
                     type="text" 
@@ -854,31 +913,8 @@ export default function Installer({ onComplete }) {
                       boxShadow: fieldErrors.fromName ? '0 0 12px rgba(239, 68, 68, 0.6)' : 'none'
                     }}
                   />
-                  {fieldErrors.fromName && (
-                    <div style={{ color: '#f87171', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', backgroundColor: 'rgba(239, 68, 68, 0.18)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                      ⚠️ {fieldErrors.fromName}
-                    </div>
-                  )}
                 </div>
               </div>
-
-              {/* Email Test Result Card */}
-              {mailStatus && (
-                <div style={{
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  backgroundColor: mailStatus.success ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                  border: `1px solid ${mailStatus.success ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                  color: mailStatus.success ? '#4ade80' : '#f87171',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {mailStatus.success ? '✅' : '⚠️'} {mailStatus.message}
-                </div>
-              )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button 
