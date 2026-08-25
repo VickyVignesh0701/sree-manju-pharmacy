@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Phone, Mail, Plus, Package, Search, Filter, Undo2, Send, Clock, CheckCircle, RotateCcw, Trash2, AlertCircle } from 'lucide-react';
+import { Building2, Phone, Mail, Search, Filter, Undo2, Send, Clock, CheckCircle, RotateCcw, Trash2, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 

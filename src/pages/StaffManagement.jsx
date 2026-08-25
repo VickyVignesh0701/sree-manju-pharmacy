@@ -1,24 +1,9 @@
 import { useState } from 'react';
-import { UserCheck, UserPlus, Search, Shield, Phone, Mail, Clock, CheckCircle, XCircle, Plus, Lock, X, Key, Eye, EyeOff } from 'lucide-react';
+import { UserCheck, UserPlus, Search, Shield, Phone, Mail, Clock, CheckCircle, X, Key, Eye, EyeOff } from 'lucide-react';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
 
 export default function StaffManagement() {
   const { user, staffMembers, addStaffMember, toggleStaffStatus, updateStaffPassword } = useAppContext();
-
-  if (user?.role !== 'owner') {
-    return (
-      <div className="card animate-fade-in" style={{ textAlign: 'center', padding: '60px 20px', maxWidth: '600px', margin: '40px auto' }}>
-        <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#fee2e2', color: 'var(--danger-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
-          <Shield size={32} />
-        </div>
-        <h2 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>Access Restricted (Owner Only)</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
-          Only the primary **Pharmacy Owner** has administrative permissions to view passwords, register, or change credentials for staff members.
-        </p>
-        <a href="/" className="btn btn-primary">Return to Dashboard</a>
-      </div>
-    );
-  }
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -40,6 +25,21 @@ export default function StaffManagement() {
     shift: 'Morning (8:00 AM - 4:00 PM)',
     tempPassword: ''
   });
+
+  if (user?.role !== 'owner') {
+    return (
+      <div className="card animate-fade-in" style={{ textAlign: 'center', padding: '60px 20px', maxWidth: '600px', margin: '40px auto' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#fee2e2', color: 'var(--danger-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+          <Shield size={32} />
+        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>Access Restricted (Owner Only)</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
+          Only the primary **Pharmacy Owner** has administrative permissions to view passwords, register, or change credentials for staff members.
+        </p>
+        <a href="/" className="btn btn-primary">Return to Dashboard</a>
+      </div>
+    );
+  }
 
   const togglePasswordVisibility = (id) => {
     setVisiblePasswords(prev => ({

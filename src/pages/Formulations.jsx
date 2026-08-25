@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlaskConical, Package, Search, Plus, X, Trash2, CheckCircle, Info, AlertCircle } from 'lucide-react';
+import { FlaskConical, Package, Search, Plus, X, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 export default function Formulations() {
@@ -25,7 +25,7 @@ export default function Formulations() {
     const fName = item.formulation || 'Tablet';
     if (!formulationMap[fName]) {
       formulationMap[fName] = {
-        id: Date.now() + Math.random(),
+        id: fName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         name: fName,
         unitLabel: 'unit',
         description: 'Pharmaceutical drug formulation',

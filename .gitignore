@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Production deployed static copies in root
+/assets/
+/favicon.svg
+/icons.svg
+/logo.png
+/sm_logo.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

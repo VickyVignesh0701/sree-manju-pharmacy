@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, TrendingUp, Package, Users, Search, Filter, BellRing, HeartHandshake } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Package, Users, Search, Filter, BellRing } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Link, useNavigate } from 'react-router-dom';
 

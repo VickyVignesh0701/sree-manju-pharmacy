@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Building, Shield, FileText, Upload, CheckCircle, FileCheck, X, Camera, Settings, Key, LogOut, Edit3, Search, Filter, LogIn, Lock, ArrowUpRight, Clock, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Building, Shield, FileText, CheckCircle, FileCheck, X, Camera, Settings, Key, LogOut, Edit3, Search, LogIn, Lock, ArrowUpRight } from 'lucide-react';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
+import logoImg from '../assets/logo.png';
 
 export default function OwnerProfile() {
   const { user, logout, showNotification, activityLogs, logActivity, updateProfileImage, staffMembers, updateStaffPassword } = useAppContext();
@@ -331,7 +332,7 @@ export default function OwnerProfile() {
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ fontSize: '17px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <img src="/logo.png" alt="Sree Manju Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                  <img src={logoImg} alt="Sree Manju Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
                   Pharmacy Details
                 </h3>
                 {user?.role === 'owner' && (

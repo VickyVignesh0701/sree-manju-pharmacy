@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  HeartHandshake, Search, BellRing, Plus, Calendar, Clock, 
+  HeartHandshake, Search, BellRing, Plus, 
   Mail, ShoppingCart, UserCheck, CheckCircle2, AlertTriangle, 
-  Sparkles, X, ChevronRight, Phone, MessageSquare, Pill
+  X, Phone, Pill
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -12,8 +12,6 @@ export default function RegularCustomers() {
     regularPatients = [], 
     addOrUpdateRegularPatient, 
     sendRefillEmailReminder,
-    toggleRegularStatus,
-    inventory = [],
     showNotification
   } = useAppContext();
 

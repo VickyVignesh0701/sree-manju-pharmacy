@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
-import { Shield, User, Lock, Mail, Phone, AlertCircle, KeyRound, UserPlus, CheckCircle2, ArrowLeft, Users, Eye, EyeOff } from 'lucide-react';
+import { Shield, User, Lock, Mail, Phone, KeyRound, UserPlus, CheckCircle2, ArrowLeft, Users, Eye, EyeOff, Sparkles, ArrowRight, Activity, HeartHandshake } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 export default function Login() {
   const { login, registerUserAccount, registeredUsers, updateUserPassword } = useAppContext();
-  const [viewMode, setViewMode] = useState(() => (registeredUsers && registeredUsers.length > 0) ? 'login' : 'register');
+  const [viewMode, setViewMode] = useState('welcome');
   
   // Password Visibility Toggle States
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -311,39 +312,37 @@ export default function Login() {
   const coOwnerCount = (registeredUsers || []).filter(u => u.role === 'co_owner').length;
   const staffCount = (registeredUsers || []).filter(u => u.role === 'staff').length;
 
-  const isSystemInstalled = primaryOwnerCount > 0;
-
   const passLengthOk = regForm.password.length >= 8 && regForm.password.length <= 16;
   const passUpperOk = /[A-Z]/.test(regForm.password);
   const passLowerOk = /[a-z]/.test(regForm.password);
   const passNumberOk = /[0-9]/.test(regForm.password);
-  const passSpecialOk = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regForm.password);
+  const passSpecialOk = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(regForm.password);
 
   const loginPassLengthOk = password.length >= 8 && password.length <= 16;
   const loginPassUpperOk = /[A-Z]/.test(password);
   const loginPassLowerOk = /[a-z]/.test(password);
   const loginPassNumberOk = /[0-9]/.test(password);
-  const loginPassSpecialOk = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  const loginPassSpecialOk = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(password);
 
   const resetPassLengthOk = resetForm.password.length >= 8 && resetForm.password.length <= 16;
   const resetPassUpperOk = /[A-Z]/.test(resetForm.password);
   const resetPassLowerOk = /[a-z]/.test(resetForm.password);
   const resetPassNumberOk = /[0-9]/.test(resetForm.password);
-  const resetPassSpecialOk = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(resetForm.password);
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: bgStyles[bgTheme],
-      position: 'relative',
-      overflow: 'hidden',
-      padding: '24px 20px',
-      transition: 'background 0.5s ease'
-    }}>
+    <div 
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: bgStyles[bgTheme],
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '24px 20px',
+        transition: 'background 0.5s ease'
+      }}
+    >
       {/* Background Ambient Glow Accents */}
       <div style={{
         position: 'absolute', top: '-100px', left: '-100px', width: '450px', height: '450px',
@@ -385,7 +384,7 @@ export default function Login() {
             padding: '12px'
           }}>
             <img 
-              src="/logo.png" 
+              src={logoImg} 
               alt="Pharmacy Logo" 
               style={{ 
                 width: '60px', 
@@ -398,27 +397,153 @@ export default function Login() {
       </div>
 
       {/* Main Glassmorphism Card */}
-      <div className="card" style={{
-        width: '480px',
-        maxWidth: '95vw',
-        padding: '36px',
-        borderRadius: '20px',
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
-        backdropFilter: 'blur(16px)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.3)',
-        position: 'relative',
-        zIndex: 10
-      }}>
+      <div 
+        className="card" 
+        style={{
+          width: viewMode === 'welcome' ? '540px' : '480px',
+          maxWidth: '95vw',
+          padding: viewMode === 'welcome' ? '40px 36px' : '36px',
+          borderRadius: '24px',
+          backgroundColor: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.3)',
+          position: 'relative',
+          zIndex: 10,
+          transition: 'all 0.3s ease'
+        }}
+      >
         
-        {/* Header Branding */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
-          <img src="/logo.png" alt="Sree Manju Pharmacy Logo" style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'contain', marginBottom: '10px', boxShadow: '0 8px 16px -4px rgba(14, 165, 233, 0.2)' }} />
-          <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Sree Manju Pharmacy</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>Pharmacy Management & POS System</p>
-        </div>
+        {/* VIEW 0: WELCOME LANDING PAGE */}
+        {viewMode === 'welcome' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            
+            {/* Top Welcome Pill Badge */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'rgba(14, 165, 233, 0.12)',
+              border: '1px solid rgba(14, 165, 233, 0.3)',
+              color: '#0284c7',
+              fontSize: '12px',
+              fontWeight: '700',
+              padding: '6px 16px',
+              borderRadius: '20px',
+              marginBottom: '22px',
+              letterSpacing: '0.4px'
+            }}>
+              <Sparkles size={14} color="#0284c7" /> WELCOME TO SREE MANJU PHARMACY
+            </div>
+
+            {/* Glowing Logo Frame */}
+            <div style={{
+              position: 'relative',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                position: 'absolute',
+                inset: '-12px',
+                borderRadius: '32px',
+                background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.6), rgba(16, 185, 129, 0.6))',
+                filter: 'blur(16px)',
+                opacity: 0.85
+              }}></div>
+              <img 
+                src={logoImg} 
+                alt="Sree Manju Pharmacy Logo" 
+                style={{
+                  position: 'relative',
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '22px',
+                  objectFit: 'contain',
+                  boxShadow: '0 12px 24px -6px rgba(0, 0, 0, 0.25)',
+                  backgroundColor: '#ffffff',
+                  padding: '6px',
+                  border: '2px solid rgba(255, 255, 255, 0.9)'
+                }}
+              />
+            </div>
+
+            {/* Slogan & Title */}
+            <h1 style={{
+              fontSize: '28px',
+              fontWeight: '800',
+              color: 'var(--text-primary)',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.5px'
+            }}>
+              Sree Manju Pharmacy
+            </h1>
+
+            <p style={{
+              fontSize: '15px',
+              fontWeight: '700',
+              color: '#0284c7',
+              margin: '0 0 14px 0',
+              lineHeight: '1.4'
+            }}>
+              "Your Trusted Partner in Health, Precision Pharmacy & POS Care"
+            </p>
+
+
+
+
+
+            {/* Enter System Button */}
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                switchTab('login');
+              }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                fontSize: '15.5px',
+                fontWeight: '700',
+                borderRadius: '12px',
+                justifyContent: 'center',
+                boxShadow: '0 10px 20px -5px rgba(2, 132, 199, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Get Started &amp; Sign In <ArrowRight size={18} />
+            </button>
+
+          </div>
+        )}
+
+        {/* HEADER BRANDING (For Login / Register / Forgot Password) */}
+        {viewMode !== 'welcome' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <button 
+                type="button"
+                onClick={() => setViewMode('welcome')}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12.5px', fontWeight: '700',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0
+                }}
+              >
+                <ArrowLeft size={14} /> Back to Welcome Page
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+              <img src={logoImg} alt="Sree Manju Pharmacy Logo" style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'contain', marginBottom: '10px', boxShadow: '0 8px 16px -4px rgba(14, 165, 233, 0.2)' }} />
+              <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Sree Manju Pharmacy</h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>Pharmacy Management &amp; POS System</p>
+            </div>
+          </>
+        )}
 
         {/* Tab Switcher: Sign In vs Account Registration */}
-        {viewMode !== 'forgot' && (
+        {viewMode !== 'forgot' && viewMode !== 'welcome' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '10px', marginBottom: '20px' }}>
             <button 
               type="button" 

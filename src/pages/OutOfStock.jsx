@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { AlertTriangle, Search, Phone, ChevronRight, Send } from 'lucide-react';
+import { AlertTriangle, Search, Phone, Send } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { useNavigate } from 'react-router-dom';
 
 export default function OutOfStock() {
-  const { inventory, getStockDisplay, dealers, getUnitName, requestMedicine } = useAppContext();
-  const navigate = useNavigate();
+  const { inventory, dealers, getUnitName, requestMedicine } = useAppContext();
   const [search, setSearch] = useState('');
 
   // Define low stock threshold (e.g. less than 30 units)

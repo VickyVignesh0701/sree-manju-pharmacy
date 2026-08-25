@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Minus, Trash2, ShoppingCart, Calculator, UserCheck, CreditCard, Banknote, IndianRupee, QrCode, FileText, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingCart, Calculator, UserCheck, CreditCard, Banknote, QrCode, FileText, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Billing({ isCalculatorOnly = false }) {
-  const { inventory, processSale, getStockDisplay, getUnitName, getPackName, patients = [], categories = [] } = useAppContext();
+  const { inventory, processSale, getStockDisplay, getUnitName, getPackName, patients = [] } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
 

@@ -17,7 +17,7 @@ export const validatePasswordComplexity = (password) => {
   if (!/[A-Z]/.test(password)) missing.push("1+ Uppercase letter (A-Z)");
   if (!/[a-z]/.test(password)) missing.push("1+ Lowercase letter (a-z)");
   if (!/[0-9]/.test(password)) missing.push("1+ Number (0-9)");
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) missing.push("1+ Special character (!@#$%^&*)");
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(password)) missing.push("1+ Special character (!@#$%^&*)");
 
   if (missing.length > 0) {
     return { 

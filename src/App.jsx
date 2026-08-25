@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingCart, Users, User, Activity, Tags, AlertTriangle, Clock, BarChart2, Mail, Copy, Check, ClipboardList, UserCheck, FlaskConical, Settings, Send, HeartHandshake, BellRing } from 'lucide-react';
+import logoImg from './assets/logo.png';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import MedicineDetails from './pages/MedicineDetails';
@@ -39,7 +40,7 @@ function Sidebar() {
   return (
     <div className="sidebar">
       <div className="brand" style={{ gap: '10px', alignItems: 'center' }}>
-        <img src="/logo.png" alt="Sree Manju Pharmacy Logo" style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'contain' }} />
+        <img src={logoImg} alt="Sree Manju Pharmacy Logo" style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'contain' }} />
         <span style={{ fontWeight: '700', fontSize: '18px', color: 'var(--text-primary)' }}>Sree Manju</span>
       </div>
       
@@ -257,8 +258,10 @@ function MainApp() {
     return <Login />;
   }
 
+  const basename = window.location.pathname.includes('/pharmacy/sree-manju-pharmacy') ? '/pharmacy/sree-manju-pharmacy' : '/';
+
   return (
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <div className="app-container">
           <Sidebar />
           <main className="main-content">
