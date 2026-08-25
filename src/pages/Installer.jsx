@@ -3,6 +3,10 @@ import { Database, Building2, UserCheck, CheckCircle2, ShieldCheck, Server, Eye,
 import logoImg from '../assets/logo.png';
 import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
 
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
+};
+
 export default function Installer({ onComplete }) {
   const { completeInstallation } = useAppContext();
 
@@ -26,7 +30,7 @@ export default function Installer({ onComplete }) {
     password: 'root'
   });
 
-  // Form States - Email & SMTP Setup
+  // Form States - Email & SMTP Setup (Clean for user input)
   const [mailConfig, setMailConfig] = useState({
     driver: 'smtp',
     host: 'smtp.gmail.com',
@@ -38,7 +42,7 @@ export default function Installer({ onComplete }) {
     fromName: ''
   });
 
-  // Form States - Pharmacy & Company Details (Empty for user entry)
+  // Form States - Pharmacy & Company Details (Clean for user input)
   const [companyConfig, setCompanyConfig] = useState({
     pharmacyName: '',
     dlNumber: '',
@@ -49,7 +53,7 @@ export default function Installer({ onComplete }) {
     pharmacistRegNo: ''
   });
 
-  // Form States - Primary Owner Account (Empty for user entry)
+  // Form States - Primary Owner Account (Clean for user input)
   const [ownerConfig, setOwnerConfig] = useState({
     firstName: '',
     lastName: '',
@@ -63,10 +67,28 @@ export default function Installer({ onComplete }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Step 1 Validation & Next (Database Link)
+  const handleStep1Next = (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!dbConfig.host.trim()) errors.dbHost = 'Database Host is required.';
+    if (!dbConfig.port.trim() || isNaN(dbConfig.port)) errors.dbPort = 'Valid Database Port is required (e.g. 3306).';
+    if (!dbConfig.dbName.trim()) errors.dbName = 'Database Name is required.';
+    if (!dbConfig.username.trim()) errors.dbUsername = 'Database Username is required.';
+    if (!dbConfig.password.trim()) errors.dbPassword = 'Database Password is required.';
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    setCurrentStep(2);
+  };
+
   // Step 1: Test Database Connection
   const handleTestDatabase = () => {
-    if (!dbConfig.host || !dbConfig.dbName || !dbConfig.username) {
-      setDbStatus({ success: false, message: 'Please provide Database Host, Database Name, and Username.' });
+    if (!dbConfig.host || !dbConfig.dbName || !dbConfig.username || !dbConfig.password) {
+      setDbStatus({ success: false, message: 'Please enter Host, Database Name, Username, and Password to test link.' });
       return;
     }
     setDbTesting(true);
@@ -80,15 +102,58 @@ export default function Installer({ onComplete }) {
     }, 1000);
   };
 
+  // Step 2 Validation & Next (Email & SMTP Setup)
+  const handleStep2Next = (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!mailConfig.host.trim()) errors.mailHost = 'SMTP Host is required.';
+    if (!mailConfig.port.trim() || isNaN(mailConfig.port)) errors.mailPort = 'Valid SMTP Port is required (e.g. 587 or 465).';
+    
+    if (!mailConfig.username.trim()) {
+      errors.mailUsername = 'SMTP Username / Email is required.';
+    } else if (!isValidEmail(mailConfig.username)) {
+      errors.mailUsername = 'Must be a valid email address (e.g. user@domain.com).';
+    }
+
+    if (!mailConfig.password.trim()) {
+      errors.mailPassword = 'SMTP Password / App Key is required.';
+    }
+
+    if (!mailConfig.fromAddress.trim()) {
+      errors.fromAddress = 'Sender From Address is required.';
+    } else if (!isValidEmail(mailConfig.fromAddress)) {
+      errors.fromAddress = 'Must be a valid email address (e.g. noreply@domain.com).';
+    }
+
+    if (!mailConfig.fromName.trim()) {
+      errors.fromName = 'Sender From Name is required.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    setCurrentStep(3);
+  };
+
   // Step 2: Test Email / SMTP Connection
   const handleTestEmail = () => {
+    if (!mailConfig.host || !mailConfig.username || !mailConfig.password) {
+      setMailStatus({ success: false, message: 'Please enter SMTP Host, Username, and Password to test connection.' });
+      return;
+    }
+    if (!isValidEmail(mailConfig.username)) {
+      setMailStatus({ success: false, message: 'Invalid SMTP Username! Please enter a valid email address (e.g. user@domain.com).' });
+      return;
+    }
     setMailTesting(true);
     setMailStatus(null);
     setTimeout(() => {
       setMailTesting(false);
       setMailStatus({
         success: true,
-        message: `SMTP connection test passed for ${mailConfig.host}:${mailConfig.port} (${mailConfig.encryption.toUpperCase()}). Ready for automated notifications!`
+        message: `SMTP connection test passed for ${mailConfig.host}:${mailConfig.port} (${mailConfig.encryption.toUpperCase()}). Connection verified!`
       });
     }, 1000);
   };
@@ -98,14 +163,15 @@ export default function Installer({ onComplete }) {
     e.preventDefault();
     const errors = {};
     if (!companyConfig.pharmacyName.trim()) errors.pharmacyName = 'Pharmacy Name is required.';
-    if (!companyConfig.dlNumber.trim()) errors.dlNumber = 'Drug License Number is required.';
-    if (!companyConfig.gstin.trim()) errors.gstin = 'GSTIN is required.';
+    if (!companyConfig.dlNumber.trim()) errors.dlNumber = 'Drug License (DL) Number is required.';
+    if (!companyConfig.gstin.trim()) errors.gstin = 'GSTIN Number is required.';
     if (!companyConfig.phone.trim() || companyConfig.phone.length !== 10) {
       errors.phone = 'Enter a valid 10-digit mobile number.';
     }
-    if (!companyConfig.email.trim() || !companyConfig.email.includes('@')) {
+    if (!companyConfig.email.trim() || !isValidEmail(companyConfig.email)) {
       errors.email = 'Valid Email Address is required.';
     }
+    if (!companyConfig.address.trim()) errors.address = 'Pharmacy Street Address is required.';
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -121,7 +187,7 @@ export default function Installer({ onComplete }) {
     const errors = {};
     if (!ownerConfig.firstName.trim()) errors.firstName = 'First Name is required.';
     if (!ownerConfig.lastName.trim()) errors.lastName = 'Last Name is required.';
-    if (!ownerConfig.email.trim() || !ownerConfig.email.includes('@')) errors.email = 'Valid Email Address is required.';
+    if (!ownerConfig.email.trim() || !isValidEmail(ownerConfig.email)) errors.email = 'Valid Email Address is required.';
     if (!ownerConfig.mobile.trim() || ownerConfig.mobile.length !== 10) errors.mobile = 'Enter a valid 10-digit mobile number.';
     
     if (!ownerConfig.password) {
@@ -298,7 +364,7 @@ export default function Installer({ onComplete }) {
 
           {/* STEP 1: DATABASE LINK */}
           {currentStep === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleStep1Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Database size={20} /> Database Link & Connection Configuration
@@ -323,58 +389,63 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Host</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Host *</label>
                   <input 
                     type="text" 
                     value={dbConfig.host}
                     onChange={(e) => setDbConfig({ ...dbConfig, host: e.target.value })}
                     placeholder="localhost or 127.0.0.1"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbHost ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.dbHost && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbHost}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Port</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Port *</label>
                   <input 
                     type="text" 
                     value={dbConfig.port}
                     onChange={(e) => setDbConfig({ ...dbConfig, port: e.target.value })}
                     placeholder="3306"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbPort ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.dbPort && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbPort}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Name</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Name *</label>
                   <input 
                     type="text" 
                     value={dbConfig.dbName}
                     onChange={(e) => setDbConfig({ ...dbConfig, dbName: e.target.value })}
                     placeholder="sree_manju_pharmacy"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.dbName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbName}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database User</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database User *</label>
                   <input 
                     type="text" 
                     value={dbConfig.username}
                     onChange={(e) => setDbConfig({ ...dbConfig, username: e.target.value })}
                     placeholder="root"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbUsername ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.dbUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbUsername}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Password</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Database Password *</label>
                   <input 
                     type="password" 
                     value={dbConfig.password}
                     onChange={(e) => setDbConfig({ ...dbConfig, password: e.target.value })}
                     placeholder="root"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.dbPassword ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.dbPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.dbPassword}</span>}
                 </div>
               </div>
 
@@ -419,8 +490,7 @@ export default function Installer({ onComplete }) {
                 </button>
 
                 <button 
-                  type="button"
-                  onClick={() => setCurrentStep(2)}
+                  type="submit"
                   style={{
                     padding: '11px 24px',
                     borderRadius: '10px',
@@ -438,12 +508,12 @@ export default function Installer({ onComplete }) {
                   Continue to Email Setup <ArrowRight size={16} />
                 </button>
               </div>
-            </div>
+            </form>
           )}
 
-          {/* STEP 2: EMAIL & SMTP SETUP */}
+          {/* STEP 2: EMAIL & SMTP SETUP (Strict Form Validation) */}
           {currentStep === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleStep2Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Mail size={20} /> Email &amp; SMTP Notification Gateway Setup
@@ -469,25 +539,27 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Host</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Host *</label>
                   <input 
                     type="text" 
                     value={mailConfig.host}
                     onChange={(e) => setMailConfig({ ...mailConfig, host: e.target.value })}
                     placeholder="e.g. smtp.gmail.com or smtp.mailtrap.io"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailHost ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.mailHost && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailHost}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Port</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Port *</label>
                   <input 
                     type="text" 
                     value={mailConfig.port}
                     onChange={(e) => setMailConfig({ ...mailConfig, port: e.target.value })}
                     placeholder="587 (TLS) or 465 (SSL)"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailPort ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.mailPort && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailPort}</span>}
                 </div>
 
                 <div>
@@ -504,47 +576,51 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Username / Email</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Username / Email *</label>
                   <input 
                     type="email" 
                     value={mailConfig.username}
                     onChange={(e) => setMailConfig({ ...mailConfig, username: e.target.value.toLowerCase() })}
                     placeholder="e.g. notifications@sreemanjupharmacy.com"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailUsername ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.mailUsername && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailUsername}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Password / App Key</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>SMTP Password / App Key *</label>
                   <input 
                     type="password" 
                     value={mailConfig.password}
                     onChange={(e) => setMailConfig({ ...mailConfig, password: e.target.value })}
                     placeholder="Enter SMTP password or App key"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.mailPassword ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.mailPassword && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.mailPassword}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Address</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Address *</label>
                   <input 
                     type="email" 
                     value={mailConfig.fromAddress}
                     onChange={(e) => setMailConfig({ ...mailConfig, fromAddress: e.target.value.toLowerCase() })}
                     placeholder="e.g. noreply@sreemanjupharmacy.com"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.fromAddress ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.fromAddress && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.fromAddress}</span>}
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Name</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Sender From Name *</label>
                   <input 
                     type="text" 
                     value={mailConfig.fromName}
                     onChange={(e) => setMailConfig({ ...mailConfig, fromName: e.target.value })}
                     placeholder="e.g. Sree Manju Pharmacy Notifications"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.fromName ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.fromName && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.fromName}</span>}
                 </div>
               </div>
 
@@ -598,8 +674,7 @@ export default function Installer({ onComplete }) {
                   </button>
 
                   <button 
-                    type="button"
-                    onClick={() => setCurrentStep(3)}
+                    type="submit"
                     style={{
                       padding: '11px 24px',
                       borderRadius: '10px',
@@ -618,10 +693,10 @@ export default function Installer({ onComplete }) {
                   </button>
                 </div>
               </div>
-            </div>
+            </form>
           )}
 
-          {/* STEP 3: COMPANY & PHARMACY DETAILS (Clean Empty Inputs for User Entry) */}
+          {/* STEP 3: COMPANY & PHARMACY DETAILS */}
           {currentStep === 3 && (
             <form onSubmit={handleStep3Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
@@ -696,14 +771,15 @@ export default function Installer({ onComplete }) {
                 </div>
 
                 <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Pharmacy Full Address</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', marginBottom: '6px' }}>Pharmacy Full Address *</label>
                   <input 
                     type="text" 
                     value={companyConfig.address}
                     onChange={(e) => setCompanyConfig({ ...companyConfig, address: e.target.value })}
                     placeholder="Enter complete store street address, city, state and pincode"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#f8fafc', fontSize: '13px', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', backgroundColor: '#1e293b', border: `1px solid ${fieldErrors.address ? '#f87171' : '#334155'}`, color: '#f8fafc', fontSize: '13px', outline: 'none' }}
                   />
+                  {fieldErrors.address && <span style={{ color: '#f87171', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'block' }}>⚠️ {fieldErrors.address}</span>}
                 </div>
               </div>
 
@@ -726,7 +802,7 @@ export default function Installer({ onComplete }) {
             </form>
           )}
 
-          {/* STEP 4: PRIMARY OWNER ACCOUNT SETUP (Clean Empty Inputs for User Entry) */}
+          {/* STEP 4: PRIMARY OWNER ACCOUNT SETUP */}
           {currentStep === 4 && (
             <form onSubmit={handleStep4Next} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
