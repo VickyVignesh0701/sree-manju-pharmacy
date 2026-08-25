@@ -68,20 +68,28 @@ export default function Dealers() {
     setFormSubmitted(true);
     setModalError('');
 
-    const missingFields = [];
-    if (!newDealer.name || !newDealer.name.trim()) missingFields.push('Company Name');
-    if (!newDealer.phone || !newDealer.phone.trim()) missingFields.push('Phone Number');
+    if (!newDealer.name || !newDealer.name.trim()) {
+      setModalError('Company / Dealer Name is required.');
+      return;
+    }
 
-    if (missingFields.length > 0) {
-      setModalError(`Required field missing: ${missingFields.join(' & ')} is required.`);
+    const cleanPhone = newDealer.phone.replace(/\D/g, '');
+    if (!newDealer.phone || !newDealer.phone.trim() || cleanPhone.length !== 10) {
+      setModalError('Valid 10-digit Phone Number is required.');
+      return;
+    }
+
+    if (newDealer.email && newDealer.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newDealer.email.trim())) {
+      setModalError('Valid Email Address format is required (e.g. sales@company.com).');
       return;
     }
 
     addDealer({
       ...newDealer,
       name: newDealer.name.trim(),
-      phone: newDealer.phone.trim(),
-      email: newDealer.email ? newDealer.email.trim() : 'N/A'
+      contactPerson: newDealer.contactPerson ? newDealer.contactPerson.trim() : 'Sales Executive',
+      phone: cleanPhone,
+      email: newDealer.email ? newDealer.email.trim().toLowerCase() : 'N/A'
     });
     setShowModal(false);
     setFormSubmitted(false);

@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { 
   HeartHandshake, Search, BellRing, Plus, 
   Mail, ShoppingCart, UserCheck, CheckCircle2, AlertTriangle, 
-  X, Phone, Pill
+  X, Phone, Pill, AlertCircle
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
+};
 
 export default function RegularCustomers() {
   const { 
@@ -20,6 +24,8 @@ export default function RegularCustomers() {
   const [filterStatus, setFilterStatus] = useState('all'); // all, due_alert, overdue, active
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedPatientForModal, setSelectedPatientForModal] = useState(null);
+  const [modalError, setModalError] = useState('');
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Form State for Adding / Editing Regular Customer
   const [formData, setFormData] = useState({
@@ -79,6 +85,8 @@ export default function RegularCustomers() {
   const activeCount = enrichedPatients.filter(p => p.alertStatus === 'active').length;
 
   const handleOpenAddModal = (p = null) => {
+    setModalError('');
+    setFormSubmitted(false);
     if (p) {
       setSelectedPatientForModal(p);
       setFormData({
@@ -127,22 +135,37 @@ export default function RegularCustomers() {
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      showNotification('Please enter Patient Name and Phone Number.');
+    setFormSubmitted(true);
+    setModalError('');
+
+    if (!formData.name.trim()) {
+      setModalError('Patient Full Name is required.');
+      return;
+    }
+    if (!formData.phone.trim() || formData.phone.trim().length !== 10) {
+      setModalError('Valid 10-digit Mobile Phone Number is required.');
+      return;
+    }
+    if (formData.email.trim() && !isValidEmail(formData.email)) {
+      setModalError('Please enter a valid Email Address format.');
       return;
     }
 
     addOrUpdateRegularPatient({
       id: selectedPatientForModal ? selectedPatientForModal.id : Date.now(),
       ...formData,
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim().toLowerCase(),
       lastPurchaseDate: selectedPatientForModal?.lastPurchaseDate || new Date().toISOString()
     });
 
     setIsAddModalOpen(false);
+    setFormSubmitted(false);
+    setModalError('');
   };
 
   const handleQuickRefillBill = (patient) => {
-    // Navigate to billing with state or prefilled search
     navigate('/billing', { state: { prefillPatient: patient } });
     showNotification(`⚡ Loaded regular patient details for ${patient.name} into Billing POS!`);
   };
@@ -369,7 +392,6 @@ export default function RegularCustomers() {
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                         
-                        {/* Email Reminder Trigger for Staff */}
                         <button 
                           className="btn btn-outline" 
                           style={{ padding: '6px 10px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#0284c7', borderColor: '#bae6fd' }}
@@ -379,7 +401,6 @@ export default function RegularCustomers() {
                           <Mail size={13} /> Staff Alert
                         </button>
 
-                        {/* Quick Refill Bill preloader */}
                         <button 
                           className="btn btn-primary" 
                           style={{ padding: '6px 12px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -388,7 +409,6 @@ export default function RegularCustomers() {
                           <ShoppingCart size={13} /> Refill Bill
                         </button>
 
-                        {/* Edit Patient */}
                         <button 
                           className="btn btn-outline" 
                           style={{ padding: '6px 8px', fontSize: '11.5px' }}
@@ -430,6 +450,14 @@ export default function RegularCustomers() {
               </button>
             </div>
 
+            {/* Error Banner */}
+            {modalError && (
+              <div style={{ backgroundColor: '#fef2f2', border: '1px solid #f87171', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', color: '#991b1b', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+                <span>{modalError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmitForm} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -439,32 +467,33 @@ export default function RegularCustomers() {
                     type="text" 
                     className="form-input" 
                     placeholder="e.g. K. Rajagopal"
-                    required
+                    style={{ borderColor: formSubmitted && !formData.name.trim() ? '#ef4444' : 'var(--border-color)' }}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', fontWeight: '600' }}>Mobile Phone Number *</label>
+                  <label className="form-label" style={{ fontSize: '12px', fontWeight: '600' }}>Mobile (10 Digits) *</label>
                   <input 
-                    type="text" 
+                    type="tel" 
                     className="form-input" 
-                    placeholder="e.g. +91 98401 23456"
-                    required
+                    maxLength={10}
+                    placeholder="10-digit mobile"
+                    style={{ borderColor: formSubmitted && (!formData.phone.trim() || formData.phone.trim().length !== 10) ? '#ef4444' : 'var(--border-color)' }}
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                   />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="form-label" style={{ fontSize: '12px', fontWeight: '600' }}>Email Address (For Reminders)</label>
+                  <label className="form-label" style={{ fontSize: '12px', fontWeight: '600' }}>Email Address (Optional)</label>
                   <input 
                     type="email" 
                     className="form-input" 
                     placeholder="patient@gmail.com"
-                    style={{ textTransform: 'lowercase' }}
+                    style={{ textTransform: 'lowercase', borderColor: formSubmitted && formData.email.trim() && !isValidEmail(formData.email) ? '#ef4444' : 'var(--border-color)' }}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value.toLowerCase() })}
                   />
