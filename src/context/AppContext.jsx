@@ -735,21 +735,71 @@ export const AppProvider = ({ children }) => {
     return { success: true };
   };
 
-  const updateUserPassword = (email, newPassword) => {
+  const updateUserPassword = (emailOrMobile, newPassword) => {
     const pwdCheck = validatePasswordComplexity(newPassword);
     if (!pwdCheck.isValid) {
       return { success: false, error: pwdCheck.error };
     }
-    const updated = registeredUsers.map(u => {
-      if (u.email.toLowerCase() === email.toLowerCase()) {
+
+    const query = (emailOrMobile || '').toLowerCase().trim();
+    const cleanMobile = query.replace(/\D/g, '');
+
+    let foundInUsers = false;
+    let foundInStaff = false;
+
+    // 1. Update registeredUsers
+    const updatedUsers = (registeredUsers || []).map(u => {
+      const uEmail = (u.email || '').toLowerCase();
+      const uMobile = (u.mobile || '').replace(/\D/g, '');
+      if (uEmail === query || (cleanMobile && uMobile && uMobile === cleanMobile)) {
+        foundInUsers = true;
         return { ...u, password: newPassword };
       }
       return u;
     });
-    setRegisteredUsers(updated);
-    localStorage.setItem('sree_manju_registered_users', JSON.stringify(updated));
-    logActivity(`Password Reset: Updated password for ${email}`);
-    showNotification(`Password updated successfully for ${email}.`);
+
+    if (foundInUsers) {
+      setRegisteredUsers(updatedUsers);
+      localStorage.setItem('sree_manju_registered_users', JSON.stringify(updatedUsers));
+    }
+
+    // 2. Update staffMembers (all staff created inside inner app)
+    const updatedStaff = (staffMembers || []).map(s => {
+      const sEmail = (s.email || '').toLowerCase();
+      const sPhone = (s.phone || s.mobile || '').replace(/\D/g, '');
+      if (sEmail === query || (cleanMobile && sPhone && sPhone === cleanMobile)) {
+        foundInStaff = true;
+        return { ...s, password: newPassword };
+      }
+      return s;
+    });
+
+    if (foundInStaff) {
+      setStaffMembers(updatedStaff);
+      localStorage.setItem('sree_manju_staff', JSON.stringify(updatedStaff));
+    }
+
+    // 3. Fallback for initial demo/system members
+    if (!foundInUsers && !foundInStaff) {
+      const newStaffList = [
+        {
+          id: Date.now(),
+          name: emailOrMobile,
+          email: query.includes('@') ? query : `${query}@sreemanjupharmacy.com`,
+          phone: cleanMobile || query,
+          role: 'Staff Member',
+          status: 'Active',
+          password: newPassword,
+          shift: 'General Shift'
+        },
+        ...(staffMembers || [])
+      ];
+      setStaffMembers(newStaffList);
+      localStorage.setItem('sree_manju_staff', JSON.stringify(newStaffList));
+    }
+
+    logActivity(`Password Reset: Updated password for member (${emailOrMobile})`);
+    showNotification(`Password updated successfully for (${emailOrMobile})!`);
     return { success: true };
   };
 

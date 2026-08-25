@@ -540,50 +540,6 @@ export default function Login() {
           </>
         )}
 
-        {/* Tab Switcher: Sign In vs Account Registration */}
-        {viewMode !== 'forgot' && viewMode !== 'welcome' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '10px', marginBottom: '20px' }}>
-            <button 
-              type="button" 
-              style={{
-                padding: '8px', 
-                fontSize: '13px', 
-                fontWeight: '700', 
-                borderRadius: '8px', 
-                border: 'none', 
-                cursor: 'pointer',
-                backgroundColor: viewMode === 'login' ? '#ffffff' : 'transparent',
-                color: viewMode === 'login' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                boxShadow: viewMode === 'login' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
-              }}
-              onClick={() => switchTab('login')}
-            >
-              Sign In
-            </button>
-            <button 
-              type="button" 
-              style={{
-                padding: '8px', 
-                fontSize: '13px', 
-                fontWeight: '700', 
-                borderRadius: '8px', 
-                border: 'none', 
-                cursor: 'pointer',
-                backgroundColor: viewMode === 'register' ? '#ffffff' : 'transparent',
-                color: viewMode === 'register' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                boxShadow: viewMode === 'register' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-              onClick={() => switchTab('register')}
-            >
-              <UserPlus size={14} /> Register Account
-            </button>
-          </div>
-        )}
-
         {/* Success Banner for Password Reset Redirect */}
         {viewMode === 'login' && resetSuccessBanner && (
           <div style={{
@@ -781,263 +737,7 @@ export default function Login() {
             </button>
 
             {/* Quick Register Button Prompt */}
-            <div style={{ textAlign: 'center', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>New Account? </span>
-              <button 
-                type="button" 
-                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => setViewMode('register')}
-              >
-                Register New Account
-              </button>
-            </div>
-
           </form>
-        )}
-
-        {/* MODE 2: ACCOUNT REGISTRATION FORM */}
-        {viewMode === 'register' && (
-          <>
-            {regStep === 1 ? (
-              <form onSubmit={handleUserRegistration} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                
-
-
-                {/* Registration Role Choice */}
-                <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Account Role *</label>
-                  <select 
-                    className="form-input" 
-                    style={{ fontWeight: '600', cursor: 'pointer' }}
-                    value={regForm.role}
-                    onChange={(e) => setRegForm({ ...regForm, role: e.target.value })}
-                  >
-                    <option value="primary_owner" disabled={primaryOwnerCount >= 1}>
-                      👨‍⚕️ Primary Owner {primaryOwnerCount >= 1 ? '(Registered - Max 1)' : '(Max 1 Account)'}
-                    </option>
-                    <option value="co_owner" disabled={coOwnerCount >= 1}>
-                      🤝 Co-Owner Partner {coOwnerCount >= 1 ? '(Registered - Max 1)' : '(Max 1 Account)'}
-                    </option>
-                    <option value="staff">💊 Staff / Pharmacist (Unlimited Accounts)</option>
-                  </select>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>First Name *</label>
-                    <div style={{ position: 'relative' }}>
-                      <User size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: regFieldErrors.firstName ? '#dc2626' : 'var(--text-secondary)' }} />
-                      <input 
-                        type="text" 
-                        name="reg_first_name"
-                        autoComplete="off"
-                        className="form-input" 
-                        placeholder="First Name" 
-                        style={{ 
-                          paddingLeft: '34px',
-                          backgroundColor: regFieldErrors.firstName ? '#fff5f5' : '',
-                          border: regFieldErrors.firstName ? '1px solid #fca5a5' : '' 
-                        }}
-                        required
-                        value={regForm.firstName}
-                        onChange={(e) => {
-                          setRegForm({ ...regForm, firstName: e.target.value });
-                          if (regFieldErrors.firstName) setRegFieldErrors({ ...regFieldErrors, firstName: '' });
-                        }}
-                      />
-                    </div>
-                    {regFieldErrors.firstName && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.firstName}</span>}
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Last Name *</label>
-                    <input 
-                      type="text" 
-                      name="reg_last_name"
-                      autoComplete="off"
-                      className="form-input" 
-                      placeholder="Last Name" 
-                      style={{ 
-                        backgroundColor: regFieldErrors.lastName ? '#fff5f5' : '',
-                        border: regFieldErrors.lastName ? '1px solid #fca5a5' : '' 
-                      }}
-                      required
-                      value={regForm.lastName}
-                      onChange={(e) => {
-                        setRegForm({ ...regForm, lastName: e.target.value });
-                        if (regFieldErrors.lastName) setRegFieldErrors({ ...regFieldErrors, lastName: '' });
-                      }}
-                    />
-                    {regFieldErrors.lastName && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.lastName}</span>}
-                  </div>
-                </div>
-
-                {/* Email Address */}
-                <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Email Address *</label>
-                  <div style={{ position: 'relative' }}>
-                    <Mail size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: regFieldErrors.email ? '#dc2626' : 'var(--text-secondary)' }} />
-                    <input 
-                      type="email" 
-                      name="reg_email_address_field"
-                      autoComplete="off"
-                      className="form-input" 
-                      placeholder="Enter Email Address" 
-                      style={{ 
-                        paddingLeft: '34px', 
-                        textTransform: 'lowercase',
-                        backgroundColor: regFieldErrors.email ? '#fff5f5' : '',
-                        border: regFieldErrors.email ? '1px solid #fca5a5' : '' 
-                      }}
-                      required
-                      value={regForm.email}
-                      onChange={(e) => {
-                        setRegForm({ ...regForm, email: e.target.value.toLowerCase() });
-                        if (regFieldErrors.email) setRegFieldErrors({ ...regFieldErrors, email: '' });
-                      }}
-                    />
-                  </div>
-                  {regFieldErrors.email && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.email}</span>}
-                </div>
-
-                {/* Mobile Number */}
-                <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Mobile Number (10 Digits) *</label>
-                  <div style={{ position: 'relative' }}>
-                    <Phone size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: regFieldErrors.mobile ? '#dc2626' : 'var(--text-secondary)' }} />
-                    <input 
-                      type="tel" 
-                      name="reg_mobile_number_field"
-                      autoComplete="off"
-                      className="form-input" 
-                      placeholder="Enter 10-Digit Mobile Number" 
-                      maxLength={10}
-                      style={{ 
-                        paddingLeft: '34px',
-                        backgroundColor: regFieldErrors.mobile ? '#fff5f5' : '',
-                        border: regFieldErrors.mobile ? '1px solid #fca5a5' : '' 
-                      }}
-                      required
-                      value={regForm.mobile}
-                      onChange={(e) => {
-                        const onlyNums = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setRegForm({ ...regForm, mobile: onlyNums });
-                        if (regFieldErrors.mobile) setRegFieldErrors({ ...regFieldErrors, mobile: '' });
-                      }}
-                    />
-                  </div>
-                  {regFieldErrors.mobile && <span style={{ color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {regFieldErrors.mobile}</span>}
-                </div>
-
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '6px', padding: '11px', fontWeight: '700', fontSize: '14px', borderRadius: '8px' }}>
-                  {regForm.role === 'staff' ? 'Complete Staff Registration' : 'Continue to Pharmacy Setup (Step 2/2) ➔'}
-                </button>
-
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  style={{ width: '100%', justifyContent: 'center', padding: '9px', fontSize: '13px' }}
-                  onClick={() => switchTab('login')}
-                >
-                  <ArrowLeft size={14} style={{ marginRight: '4px' }} /> Back to Sign In
-                </button>
-
-              </form>
-            ) : (
-              /* STEP 2: PHARMACY STORE SETUP & REGULATORY LICENSES MODULE */
-              <form onSubmit={handlePharmacyDetailsSubmit} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '14px', animation: 'fadeIn 0.25s ease-in-out' }}>
-                
-                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px 14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    🏥 STEP 2/2: PHARMACY STORE &amp; REGULATORY SETUP
-                  </div>
-                  <p style={{ fontSize: '11.5px', color: '#1e3a8a', marginTop: '4px', margin: 0 }}>
-                    Please fill in your pharmacy store name, drug license (DL) number, GSTIN, and store address before completing registration.
-                  </p>
-                </div>
-
-                {/* Business / Pharmacy Name */}
-                <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Pharmacy / Store Name *</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. Sree Manju Pharmacy" 
-                    required
-                    value={pharmacyForm.pharmacyName}
-                    onChange={(e) => setPharmacyForm({ ...pharmacyForm, pharmacyName: e.target.value })}
-                  />
-                </div>
-
-                {/* Drug License & GSTIN Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Drug License (DL) No. *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="e.g. DL-TN-102-123456" 
-                      required
-                      value={pharmacyForm.dlNumber}
-                      onChange={(e) => setPharmacyForm({ ...pharmacyForm, dlNumber: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>GSTIN Reg Number *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="e.g. 33AAAAA0000A1Z5" 
-                      required
-                      value={pharmacyForm.gstin}
-                      onChange={(e) => setPharmacyForm({ ...pharmacyForm, gstin: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {/* Pharmacist Reg Number */}
-                <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Pharmacist Council Reg No. *</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. PRN-2024-8890" 
-                    required
-                    value={pharmacyForm.pharmacistRegNo}
-                    onChange={(e) => setPharmacyForm({ ...pharmacyForm, pharmacistRegNo: e.target.value })}
-                  />
-                </div>
-
-                {/* Pharmacy Address */}
-                <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '12px' }}>Pharmacy Store Address *</label>
-                  <textarea 
-                    className="form-input" 
-                    rows={2}
-                    placeholder="e.g. 123 Health Street, Medical District, Chennai, Tamil Nadu 600001" 
-                    required
-                    style={{ resize: 'none' }}
-                    value={pharmacyForm.address}
-                    onChange={(e) => setPharmacyForm({ ...pharmacyForm, address: e.target.value })}
-                  />
-                </div>
-
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '6px', padding: '11px', fontWeight: '700', fontSize: '14px', borderRadius: '8px' }}>
-                  Complete Setup &amp; Redirect to Login ➔
-                </button>
-
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  style={{ width: '100%', justifyContent: 'center', padding: '9px', fontSize: '13px' }}
-                  onClick={() => setRegStep(1)}
-                >
-                  <ArrowLeft size={14} style={{ marginRight: '4px' }} /> Back to Account Credentials
-                </button>
-
-              </form>
-            )}
-          </>
         )}
 
         {/* MODE 3: FORGOT PASSWORD */}
@@ -1067,18 +767,17 @@ export default function Login() {
             {!resetSent ? (
               <form onSubmit={handleResetPassword} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Registered Email Address *</label>
+                  <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Registered Email or 10-Digit Mobile Number *</label>
                   <div style={{ position: 'relative' }}>
                     <Mail size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: resetFieldErrors.email ? '#dc2626' : 'var(--text-secondary)' }} />
                     <input 
-                      type="email" 
+                      type="text" 
                       name="forgot_email_field"
                       autoComplete="off"
                       className="form-input" 
-                      placeholder="enter registered email" 
+                      placeholder="enter registered email or mobile number" 
                       style={{ 
                         paddingLeft: '38px',
-                        textTransform: 'lowercase',
                         backgroundColor: resetFieldErrors.email ? '#fff5f5' : '',
                         border: resetFieldErrors.email ? '1px solid #fca5a5' : ''
                       }}
@@ -1093,7 +792,7 @@ export default function Login() {
                   </div>
                   {resetFieldErrors.email && <span style={{ color: '#dc2626', fontSize: '11.5px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {resetFieldErrors.email}</span>}
                   <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                    We will send password reset instructions and a direct link to this email address.
+                    Password reset works for all owner and staff members using their registered email or mobile number.
                   </p>
                 </div>
                 
