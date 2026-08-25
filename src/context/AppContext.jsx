@@ -556,6 +556,41 @@ export const AppProvider = ({ children }) => {
     showNotification(`Saved regular patient ${patientData.name} (25-Day Auto Refill Alert Active)!`);
   };
 
+  // Helper to send real emails via PHP SMTP endpoint if configured
+  const dispatchRealEmail = async (emailData) => {
+    try {
+      const savedConfig = localStorage.getItem('sree_manju_smtp_config');
+      let config = savedConfig ? JSON.parse(savedConfig) : null;
+      if (!config) {
+        const res = await fetch('/pharmacy/sree-manju-pharmacy/api/smtp_mailer.php');
+        const data = await res.json();
+        if (data.success && data.config) config = data.config;
+      }
+      if (config && config.username && config.password) {
+        const payload = {
+          action: 'send',
+          host: config.host || 'smtp.gmail.com',
+          port: config.port || 587,
+          encryption: config.encryption || 'tls',
+          username: config.username,
+          password: config.password,
+          fromAddress: config.fromAddress || config.username,
+          fromName: config.fromName || 'Sree Manju Pharmacy Notifications',
+          toAddress: emailData.email,
+          subject: emailData.subject,
+          body: emailData.body
+        };
+        fetch('/pharmacy/sree-manju-pharmacy/api/smtp_mailer.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn('Email dispatch warning:', err));
+      }
+    } catch (e) {
+      console.warn('Real email dispatch check warning:', e);
+    }
+  };
+
   const sendRefillEmailReminder = (patient) => {
     const ownerEmail = user?.email || 'owner@sreemanjupharmacy.com';
     const medsList = (patient.regularMedicines || []).join(', ') || 'Monthly Prescriptions';
@@ -563,13 +598,16 @@ export const AppProvider = ({ children }) => {
     const lastDate = patient.lastPurchaseDate ? new Date(patient.lastPurchaseDate) : new Date();
     const daysPassed = Math.floor(Math.abs(new Date() - lastDate) / (1000 * 60 * 60 * 24));
 
-    setActiveEmail({
+    const emailObj = {
       type: 'Internal Pharmacy Staff Refill Alert',
       dealerName: 'Pharmacy Staff / Owner',
       email: ownerEmail,
       subject: `[INTERNAL PHARMACY ALERT] 25-Day Refill Due for Patient: ${patient.name}`,
       body: `INTERNAL PHARMACY ALERT (SREE MANJU PHARMACY)\n----------------------------------------\nPatient Refill Reminder Triggered (25+ Days Completed)\n\n• Patient Name: ${patient.name}\n• Phone Number: ${patient.phone}\n• Patient Email: ${patient.email || 'N/A'}\n• Chronic Condition: ${patient.condition || 'Regular Care'}\n• Regular Monthly Medicines: ${medsList}\n• Last Billing Date: ${new Date(patient.lastPurchaseDate).toLocaleDateString()}\n• Days Completed: ${daysPassed} Days (Threshold: 25 Days)\n\nREQUIRED ACTION FOR PHARMACY STAFF:\n1. Contact patient at ${patient.phone} or send WhatsApp refill reminder.\n2. Open Billing screen & load prefilled 30-day refill cart.\n\nSent automatically to Pharmacy Owner (${ownerEmail})`
-    });
+    };
+
+    setActiveEmail(emailObj);
+    dispatchRealEmail(emailObj);
     logActivity(`Internal 25-Day Refill Alert Generated for Staff: ${patient.name}`);
   };
 
