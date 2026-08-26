@@ -7,6 +7,7 @@ require_once __DIR__ . '/sales.php';
 require_once __DIR__ . '/returns.php';
 require_once __DIR__ . '/dealers.php';
 require_once __DIR__ . '/batches.php';
+require_once __DIR__ . '/purchase_verification.php';
 
 cors();
 if (requestMethod() === 'OPTIONS') { http_response_code(204); exit; }
@@ -24,6 +25,7 @@ try {
     if (($segments[0] ?? '') === 'returns') handleReturns($segments,$user);
     if (($segments[0] ?? '') === 'dealers') handleDealers($segments,$user);
     if (($segments[0] ?? '') === 'batches') handleBatches($segments,$user);
+    if (($segments[0] ?? '') === 'purchase-verification') handlePurchaseVerification($segments,$user);
     jsonResponse(['success'=>false,'message'=>'API endpoint not found.'],404);
 } catch (Throwable $e) {
     error_log('Sree Manju Pharmacy API: '.$e->getMessage());
