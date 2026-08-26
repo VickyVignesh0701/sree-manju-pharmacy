@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/stock.php';
 
 cors();
 if (requestMethod() === 'OPTIONS') {
@@ -28,6 +29,10 @@ try {
 
     if (($segments[0] ?? '') === 'medicines') {
         handleMedicines($segments, $user);
+    }
+
+    if (($segments[0] ?? '') === 'stock') {
+        handleStock($segments, $user);
     }
 
     jsonResponse(['success' => false, 'message' => 'API endpoint not found.'], 404);
