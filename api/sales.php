@@ -1,15 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Transactional billing API.
- *
- * The server calculates line totals from database prices and reduces stock in
- * the same transaction as the invoice. Client-supplied totals are ignored.
- * Stock quantities remain in the medicine's configured packaging label (for
- * example, strips), never a generic "unit" label.
- */
-
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 
@@ -75,9 +66,9 @@ function createSale(array $input, array $user): never
                 throw new RuntimeException('Insufficient stock for ' . $medicine['name'] . '. Available: ' . $available . ' ' . $unit . '.');
             }
 
-            $unitPrice = $unit === 'strip'
-                ? (float)($medicine['strip_selling_price'] ?? 0)
-                : (float)($medicine['strip_selling_price'] ?? 0);
+            // The configured package selling price is authoritative; the client
+            // cannot override it. Existing schema names this field strip_selling_price.
+            $unitPrice = (float)($medicine['strip_selling_price'] ?? 0);
             if ($unitPrice <= 0) {
                 throw new InvalidArgumentException('Selling price is not configured for ' . $medicine['name'] . '.');
             }
@@ -91,7 +82,10 @@ function createSale(array $input, array $user): never
             $newStock = $available - $quantity;
             $tabletsPerStrip = max((int)$medicine['tablets_per_strip'], 1);
             $baseDecrease = $unit === 'strip' ? $quantity * $tabletsPerStrip : $quantity;
-            $newBaseStock = max((int)$medicine['current_stock_base_units'] - $baseDecrease, 0);
+            $newBaseStock = (int)$medicine['current_stock_base_units'] - $baseDecrease;
+            if ($newBaseStock < 0) {
+                throw new RuntimeException('Insufficient base stock for ' . $medicine['name'] . '.');
+            }
 
             $preparedItems[] = [
                 'medicine' => $medicine,
@@ -111,12 +105,14 @@ function createSale(array $input, array $user): never
         }
 
         $invoiceNo = createInvoiceNumber();
+        $saleId = random_int(1000000000, 9999999999);
         $finalAmount = round($subtotal - $discountTotal + $taxTotal, 2);
         $customerName = trim((string)($input['customer_name'] ?? '')) ?: null;
         $customerPhone = trim((string)($input['customer_phone'] ?? '')) ?: null;
 
-        $stmt = $pdo->prepare('INSERT INTO sales_log (invoice_no, customer_name, customer_phone, payment_mode, total_amount, discount_amount, tax_amount, final_amount, status, billed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO sales_log (id, invoice_no, customer_name, customer_phone, payment_mode, total_amount, discount_amount, tax_amount, final_amount, status, billed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
+            $saleId,
             $invoiceNo,
             $customerName,
             $customerPhone,
@@ -128,7 +124,6 @@ function createSale(array $input, array $user): never
             'Completed',
             $user['id'] ?? null,
         ]);
-        $saleId = (int)$pdo->lastInsertId();
 
         foreach ($preparedItems as $item) {
             $medicine = $item['medicine'];
