@@ -31,7 +31,6 @@ function Sidebar() {
   const location = useLocation();
   const path = location.pathname;
 
-  // Calculate pending 25-day alerts count for sidebar badge
   const pendingRefillAlerts = regularPatients.filter(p => {
     const lastDate = p.lastPurchaseDate ? new Date(p.lastPurchaseDate) : new Date();
     const daysPassed = Math.floor(Math.abs(new Date() - lastDate) / (1000 * 60 * 60 * 24));
@@ -51,9 +50,13 @@ function Sidebar() {
           <LayoutDashboard size={18} />
           Dashboard
         </Link>
-        <Link to="/billing" className={`nav-item ${path === '/billing' ? 'active' : ''}`}>
+        <Link to="/billing" className={`nav-item ${path === '/billing' && !location.search.includes('view=cart') ? 'active' : ''}`}>
           <ShoppingCart size={18} />
           Billing / POS
+        </Link>
+        <Link to="/billing?view=cart" className={`nav-item ${path === '/billing' && location.search.includes('view=cart') ? 'active' : ''}`}>
+          <ShoppingCart size={18} />
+          Cart List
         </Link>
         <Link to="/regular-customers" className={`nav-item ${path === '/regular-customers' ? 'active' : ''}`} style={{ position: 'relative' }}>
           <HeartHandshake size={18} />
@@ -134,7 +137,7 @@ function Header() {
   const getTitle = () => {
     switch (location.pathname) {
       case '/': return 'Dashboard';
-      case '/billing': return 'Billing & Checkout';
+      case '/billing': return location.search.includes('view=cart') ? 'Cart List' : 'Billing & Checkout';
       case '/regular-customers': return 'Regular & Chronic Care Patients (25-Day Refill Alerts)';
       case '/sales-log': return 'Sales Log & Receipts';
       case '/inventory': return 'Inventory Management';
