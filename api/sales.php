@@ -35,7 +35,7 @@ function createSale(array $input,array $user):never {
             }
             if($remaining>0)throw new RuntimeException('Insufficient non-expired stock for '.$medicine['name'].'. Requested '.$requestedQty.' '.$unit.'.');
         }
-        $invoiceNo=createInvoiceNumber();$saleId=random_int(1000000000,9999999999);$finalAmount=round($subtotal-$discountTotal+$taxTotal,2);$customerName=trim((string)($input['customer_name']??''))?:null;$customerPhone=trim((string)($input['customer_phone']??''))?:null;
+        $invoiceNo=createInvoiceNumber();$saleId=random_int(1000000000,9999999999);$rawFinalAmount=$subtotal-$discountTotal+$taxTotal;$finalAmount=(float)ceil($rawFinalAmount);$customerName=trim((string)($input['customer_name']??''))?:null;$customerPhone=trim((string)($input['customer_phone']??''))?:null;
         $stmt=$pdo->prepare('INSERT INTO sales_log (id,invoice_no,customer_name,customer_phone,payment_mode,total_amount,discount_amount,tax_amount,final_amount,status,billed_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)');$stmt->execute([$saleId,$invoiceNo,$customerName,$customerPhone,$paymentMode,round($subtotal,2),round($discountTotal,2),round($taxTotal,2),$finalAmount,'Completed',$user['id']??null]);
         foreach($prepared as $item){$m=$item['medicine'];$b=$item['batch'];
             $stmt=$pdo->prepare('INSERT INTO sale_items (sale_id,medicine_id,batch_number,quantity,unit_label,unit_price,discount_amount,tax_amount,line_total) VALUES (?,?,?,?,?,?,?,?,?)');$stmt->execute([$saleId,(int)$m['id'],$b['batch_number'],$item['quantity'],$item['unit'],$item['unit_price'],$item['discount'],$item['tax'],$item['line_total']]);

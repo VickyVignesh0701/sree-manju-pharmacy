@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Minus, Trash2, ShoppingCart, Calculator, UserCheck, CreditCard, Banknote, QrCode, FileText, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import pharmacyApi from '../services/pharmacyApi';
+import { pharmacyApi } from '../services/pharmacyApi';
 
 export default function Billing({ isCalculatorOnly = false }) {
   const { inventory, processSale, getStockDisplay, getUnitName, getPackName, patients = [] } = useAppContext();
@@ -307,11 +307,24 @@ export default function Billing({ isCalculatorOnly = false }) {
       customer_name: patient.name || 'Walk-in Customer',
       customer_phone: patient.phone || '',
       payment_mode: paymentMode === 'UPI / QR Code' ? 'UPI' : paymentMode,
-      items: validCart.map(item => ({
-        medicine_id: item.id,
-        quantity: item.quantity,
-        unit_label: item.unitType || 'strip',
-      })),
+      items: validCart.map(item => {
+        const isStrip = (item.unitType || 'strip') === 'strip';
+        const pricePerUnit = isStrip
+          ? Number(item.pricePerStrip || 0)
+          : Number(item.pricePerStrip || 0) / (item.tabletsPerStrip || 1);
+        const itemSubtotal = item.quantity * pricePerUnit;
+        const itemDiscount = discountPercent > 0
+          ? Math.min(itemSubtotal * (discountPercent / 100), itemSubtotal)
+          : 0;
+
+        return {
+          medicine_id: item.id,
+          quantity: item.quantity,
+          unit_label: item.unitType || 'strip',
+          discount_amount: Number(itemDiscount.toFixed(2)),
+          tax_rate: 5,
+        };
+      }),
     };
 
     try {
