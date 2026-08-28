@@ -51,11 +51,11 @@ function Sidebar() {
           <LayoutDashboard size={18} />
           Dashboard
         </Link>
-        <Link to="/billing" className={`nav-item ${path === '/billing' && !location.search.includes('view=cart') ? 'active' : ''}`}>
+        <Link to="/billing" className={`nav-item ${path === '/billing' ? 'active' : ''}`}>
           <ShoppingCart size={18} />
           Billing / POS
         </Link>
-        <Link to="/billing?view=cart" className={`nav-item ${path === '/billing' && location.search.includes('view=cart') ? 'active' : ''}`}>
+        <Link to="/billing/cart" className={`nav-item ${path === '/billing/cart' ? 'active' : ''}`}>
           <ShoppingCart size={18} />
           Cart List
         </Link>
@@ -138,7 +138,8 @@ function Header() {
   const getTitle = () => {
     switch (location.pathname) {
       case '/': return 'Dashboard';
-      case '/billing': return location.search.includes('view=cart') ? 'Cart List' : 'Billing & Checkout';
+      case '/billing': return 'Billing & Checkout';
+      case '/billing/cart': return 'Cart List';
       case '/regular-customers': return 'Regular & Chronic Care Patients (25-Day Refill Alerts)';
       case '/sales-log': return 'Sales Log & Receipts';
       case '/inventory': return 'Inventory Management';
