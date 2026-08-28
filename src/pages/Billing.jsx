@@ -174,9 +174,9 @@ export default function Billing({ isCalculatorOnly = false }) {
   const subtotal = cart.reduce((sum, item) => {
     const isStrip = (item.unitType || 'strip') === 'strip';
     if (isStrip) {
-      return sum + (item.pricePerStrip * item.quantity);
+      return sum + (item.stripSellingPrice * item.quantity);
     } else {
-      const pricePerTablet = item.pricePerStrip / (item.tabletsPerStrip || 1);
+      const pricePerTablet = item.stripSellingPrice / (item.tabletsPerStrip || 1);
       return sum + (pricePerTablet * item.quantity);
     }
   }, 0);
@@ -194,10 +194,10 @@ export default function Billing({ isCalculatorOnly = false }) {
     let itemsHtml = '';
     cartItems.forEach(item => {
       const isStrip = (item.unitType || 'strip') === 'strip';
-      const pricePerTab = item.pricePerStrip / (item.tabletsPerStrip || 1);
-      const rate = isStrip ? item.pricePerStrip : pricePerTab;
+      const pricePerTab = item.stripSellingPrice / (item.tabletsPerStrip || 1);
+      const rate = isStrip ? item.stripSellingPrice : pricePerTab;
       const unitLabel = isStrip ? (item.tabletsPerStrip > 1 ? 'Strip(s)' : 'Pack(s)') : 'Tablet(s)';
-      const itemTotal = isStrip ? (item.pricePerStrip * item.quantity) : (pricePerTab * item.quantity);
+      const itemTotal = isStrip ? (item.stripSellingPrice * item.quantity) : (pricePerTab * item.quantity);
 
       itemsHtml += `
         <tr>
@@ -310,8 +310,8 @@ export default function Billing({ isCalculatorOnly = false }) {
       items: validCart.map(item => {
         const isStrip = (item.unitType || 'strip') === 'strip';
         const pricePerUnit = isStrip
-          ? Number(item.pricePerStrip || 0)
-          : Number(item.pricePerStrip || 0) / (item.tabletsPerStrip || 1);
+          ? Number(item.stripSellingPrice || 0)
+          : Number(item.stripSellingPrice || 0) / (item.tabletsPerStrip || 1);
         const itemSubtotal = item.quantity * pricePerUnit;
         const itemDiscount = discountPercent > 0
           ? Math.min(itemSubtotal * (discountPercent / 100), itemSubtotal)
@@ -555,7 +555,7 @@ export default function Billing({ isCalculatorOnly = false }) {
               </thead>
               <tbody>
                 {filteredProducts.map(p => {
-                  const pricePerTab = p.pricePerStrip / p.tabletsPerStrip;
+                  const pricePerTab = p.stripSellingPrice / p.tabletsPerStrip;
                   const isLow = p.totalTablets < 30;
                   const inCart = cart.find(c => c.id === p.id);
 
@@ -569,7 +569,7 @@ export default function Billing({ isCalculatorOnly = false }) {
                       </td>
                       <td>
                         <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{pricePerTab.toFixed(2)}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>₹{p.pricePerStrip} / {getPackName(p.formulation)}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>₹{p.stripSellingPrice} / {getPackName(p.formulation)}</div>
                       </td>
                       <td>
                         <span className={isLow ? 'badge badge-danger' : 'badge badge-success'} style={{ fontSize: '11px' }}>
@@ -652,8 +652,8 @@ export default function Billing({ isCalculatorOnly = false }) {
               ) : (
                 cart.map(item => {
                   const isStrip = (item.unitType || 'strip') === 'strip';
-                  const pricePerTab = item.pricePerStrip / (item.tabletsPerStrip || 1);
-                  const itemTotal = isStrip ? (item.pricePerStrip * item.quantity) : (pricePerTab * item.quantity);
+                  const pricePerTab = item.stripSellingPrice / (item.tabletsPerStrip || 1);
+                  const itemTotal = isStrip ? (item.stripSellingPrice * item.quantity) : (pricePerTab * item.quantity);
 
                   return (
                     <div key={item.id} style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '10px', backgroundColor: '#ffffff', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}>
@@ -683,7 +683,7 @@ export default function Billing({ isCalculatorOnly = false }) {
                             }}
                             onClick={() => toggleUnit(item.id, 'strip')}
                           >
-                            📦 Full Strip (₹{item.pricePerStrip})
+                            📦 Full Strip (₹{item.stripSellingPrice})
                           </button>
                           <button
                             type="button"
@@ -709,7 +709,7 @@ export default function Billing({ isCalculatorOnly = false }) {
                       {/* Quantity Controls & Total */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                          {isStrip ? `Rate: ₹${item.pricePerStrip.toFixed(2)}/strip` : `Rate: ₹${pricePerTab.toFixed(2)}/tab`}
+                          {isStrip ? `Rate: ₹${item.stripSellingPrice.toFixed(2)}/strip` : `Rate: ₹${pricePerTab.toFixed(2)}/tab`}
                         </div>
 
                         {/* Quantity Stepper & Subtotal Price */}

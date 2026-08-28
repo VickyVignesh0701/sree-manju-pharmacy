@@ -1,7 +1,13 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /pharmacy/sree-manju-pharmacy/
+
+  # Send API requests to PHP
+  RewriteRule ^api(?:/(.*))?$ api/index.php [L,QSA]
+
+  # React frontend
   RewriteRule ^index\.html$ - [L]
+
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /pharmacy/sree-manju-pharmacy/index.html [L]
