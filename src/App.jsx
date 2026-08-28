@@ -9,6 +9,7 @@ import StockOverview from './pages/StockOverview';
 import OutOfStock from './pages/OutOfStock';
 import ExpiryAlerts from './pages/ExpiryAlerts';
 import Billing from './pages/Billing';
+import CartList from './pages/CartList';
 import Categories from './pages/Categories';
 import Formulations from './pages/Formulations';
 import Dealers from './pages/Dealers';
@@ -276,6 +277,7 @@ function MainApp() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/billing" element={<Billing />} />
+                <Route path="/billing/cart" element={<CartList />} />
                 <Route path="/regular-customers" element={<RegularCustomers />} />
                 <Route path="/sales-log" element={<SalesLog />} />
                 <Route path="/inventory" element={<Inventory />} />
