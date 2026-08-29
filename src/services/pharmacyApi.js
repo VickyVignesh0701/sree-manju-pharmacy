@@ -41,7 +41,10 @@ export const pharmacyApi = {
 
   sales: {
     create: (payload) => apiPost('sales', payload),
-    list: () => apiGet('sales'),
+    list: (params = {}) => {
+      const query = new URLSearchParams(params).toString();
+      return apiGet(`sales/list${query ? `?${query}` : ''}`);
+    },
   },
 
   returns: {
