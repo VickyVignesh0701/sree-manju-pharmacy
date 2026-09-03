@@ -9,6 +9,12 @@ declare(strict_types=1);
 function envValue(string $key, ?string $default = null): ?string
 {
     $value = getenv($key);
+
+    // Provide a fallback token secret for local development without a .env file.
+    if ($value === false && $key === 'API_TOKEN_SECRET') {
+        return 'development-secret-token-key-12345';
+    }
+
     return $value === false ? $default : $value;
 }
 
