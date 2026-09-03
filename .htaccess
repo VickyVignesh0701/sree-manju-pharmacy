@@ -1,0 +1,47 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /pharmacy/sree-manju-pharmacy/
+
+  # Redirect to HTTPS in production. Stays inert for local development
+  # (localhost/127.0.0.1), which is normally plain HTTP.
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Send API requests to PHP
+  RewriteRule ^api(?:/(.*))?$ api/index.php [L,QSA]
+
+  # React frontend
+  RewriteRule ^index\.html$ - [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /pharmacy/sree-manju-pharmacy/index.html [L]
+</IfModule>
+
+# ------------------------------------------------------------
+# Block direct web access to files that should never be served
+# as static content - .env holds live DB/API credentials, .sql
+# dumps the schema (and any seed data), and the docs describe
+# exactly what's been fixed and what hasn't.
+# ------------------------------------------------------------
+<FilesMatch "(^\.env.*|\.sql$|\.md$|composer\.(json|lock)|package(-lock)?\.json)$">
+  Require all denied
+</FilesMatch>
+
+# Unanchored so this matches regardless of which subdirectory the app is
+# installed under (the RewriteBase above is itself a subdirectory, e.g.
+# /pharmacy/sree-manju-pharmacy/, not the true web root).
+RedirectMatch 403 (^|/)database/
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "DENY"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+

@@ -1,0 +1,1128 @@
+import { useState, useEffect } from 'react';
+import { useAppContext, validatePasswordComplexity } from '../context/AppContext';
+import { authenticate, register, requestPasswordReset, confirmPasswordReset } from '../services/auth';
+import { Shield, User, Lock, Mail, Phone, KeyRound, UserPlus, CheckCircle2, ArrowLeft, Users, Eye, EyeOff, Sparkles, ArrowRight, Activity, HeartHandshake } from 'lucide-react';
+import logoImg from '../assets/logo.png';
+
+export default function Login() {
+  const { setAuthenticatedUser, recordRegisteredUser, registeredUsers } = useAppContext();
+  const [viewMode, setViewMode] = useState('welcome');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // A password reset email links back here with ?reset_token=... - if it's
+  // present, skip straight to the "set new password" step and use the real
+  // token instead of trusting whatever email address is typed in.
+  const [resetToken] = useState(() => new URLSearchParams(window.location.search).get('reset_token') || '');
+
+  // Password Visibility Toggle States
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+  const [showResetPass, setShowResetPass] = useState(false);
+  const [showResetConfirmPass, setShowResetConfirmPass] = useState(false);
+
+  // Login State
+  const [role, setRole] = useState('primary_owner');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Forgot & Reset Password State
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetForm, setResetForm] = useState({ password: '', confirmPassword: '' });
+  const [resetFieldErrors, setResetFieldErrors] = useState({});
+  const [resetError, setResetError] = useState('');
+  const [resetSuccessBanner, setResetSuccessBanner] = useState('');
+
+  // Account Registration Form State
+  const [regStep, setRegStep] = useState(1); // Step 1: Owner Info, Step 2: Pharmacy Details Setup
+  const [pharmacyForm, setPharmacyForm] = useState({
+    pharmacyName: 'Sree Manju Pharmacy',
+    dlNumber: 'DL-TN-102-123456',
+    gstin: '33AAAAA0000A1Z5',
+    pharmacistRegNo: 'PRN-2024-8890',
+    address: '123 Health Street, Medical District, Chennai, Tamil Nadu 600001',
+    phone: ''
+  });
+
+  const [regForm, setRegForm] = useState({
+    role: 'primary_owner',
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobile: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [regError, setRegError] = useState('');
+  const [loginFieldErrors, setLoginFieldErrors] = useState({});
+  const [regFieldErrors, setRegFieldErrors] = useState({});
+
+  useEffect(() => {
+    if (!window.history.state || !window.history.state.viewMode) {
+      window.history.replaceState({ viewMode: 'welcome' }, '', window.location.href);
+    }
+
+    const handlePopState = (e) => {
+      if (e.state && e.state.viewMode) {
+        setViewMode(e.state.viewMode);
+      } else {
+        setViewMode('welcome');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (resetToken) {
+      setViewMode('reset_new_password');
+    }
+  }, [resetToken]);
+
+  const switchTab = (mode, pushHistory = true) => {
+    if (pushHistory && mode !== viewMode) {
+      window.history.pushState({ viewMode: mode }, '', window.location.href);
+    }
+    setViewMode(mode);
+    setRegStep(1);
+    setErrorMessage('');
+    setRegError('');
+    setResetError('');
+    setResetSuccessBanner('');
+    setLoginFieldErrors({});
+    setRegFieldErrors({});
+    setResetFieldErrors({});
+    setResetSent(false);
+  };
+
+  const handleRoleChange = (newRole) => {
+    setRole(newRole);
+    setErrorMessage('');
+    setLoginFieldErrors({});
+    setUsername('');
+    setPassword('');
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    const errors = {};
+
+    if (!username.trim()) {
+      errors.username = 'Username / Email is required.';
+    }
+    if (!password.trim()) {
+      errors.password = 'Password is required.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setLoginFieldErrors(errors);
+      if (errors.username) {
+        setErrorMessage('Username / Email is required! Please enter your username or email.');
+      } else {
+        setErrorMessage('Password is required! Please enter your password.');
+      }
+      return;
+    }
+
+    setLoginFieldErrors({});
+    setIsSubmitting(true);
+    try {
+      const data = await authenticate(username, password);
+      setAuthenticatedUser(data.user);
+    } catch (err) {
+      setLoginFieldErrors({ password: 'Incorrect email or password.' });
+      setErrorMessage(err.message || 'Incorrect email or password. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUserRegistration = (e) => {
+    e.preventDefault();
+    setRegError('');
+    const errors = {};
+
+    if (!regForm.firstName.trim()) {
+      errors.firstName = 'First Name is required.';
+    }
+    if (!regForm.lastName.trim()) {
+      errors.lastName = 'Last Name is required.';
+    }
+    if (!regForm.email.trim()) {
+      errors.email = 'Email Address is required.';
+    } else if (!regForm.email.includes('@')) {
+      errors.email = 'Enter a valid email address.';
+    }
+    if (!regForm.mobile.trim()) {
+      errors.mobile = 'Mobile Number is required.';
+    } else if (regForm.mobile.length !== 10) {
+      errors.mobile = 'Mobile Number must be exactly 10 digits.';
+    }
+    if (!regForm.password) {
+      errors.password = 'Password is required.';
+    } else {
+      const pwdCheck = validatePasswordComplexity(regForm.password);
+      if (!pwdCheck.isValid) errors.password = pwdCheck.error;
+    }
+    if (!regForm.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password.';
+    } else if (regForm.password !== regForm.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setRegFieldErrors(errors);
+      if (errors.firstName) {
+        setRegError('First Name is required! Please enter a first name.');
+      } else if (errors.lastName) {
+        setRegError('Last Name is required! Please enter a last name.');
+      } else if (errors.email) {
+        setRegError('Email Address is required! Please enter an email address.');
+      } else if (errors.mobile) {
+        setRegError(errors.mobile);
+      } else if (errors.password) {
+        setRegError(errors.password);
+      } else if (errors.confirmPassword) {
+        setRegError(errors.confirmPassword);
+      } else {
+        setRegError('Required fields are missing! Please fill in all required fields.');
+      }
+      return;
+    }
+
+    setRegFieldErrors({});
+
+    if (regForm.role === 'primary_owner' || regForm.role === 'co_owner') {
+      setRegStep(2);
+    } else {
+      finalizeRegistration();
+    }
+  };
+
+  const handlePharmacyDetailsSubmit = (e) => {
+    e.preventDefault();
+
+    const businessSettings = {
+      pharmacyName: pharmacyForm.pharmacyName.trim() || 'Sree Manju Pharmacy',
+      dlNumber: pharmacyForm.dlNumber.trim() || 'DL-TN-102-123456',
+      gstin: pharmacyForm.gstin.trim() || '33AAAAA0000A1Z5',
+      phone: pharmacyForm.phone.trim() || regForm.mobile.trim() || '+91 98765 12345',
+      address: pharmacyForm.address.trim() || '123 Health Street, Medical District, Chennai, Tamil Nadu 600001',
+      receiptFooter: `Thank you for choosing ${pharmacyForm.pharmacyName.trim() || 'Sree Manju Pharmacy'}! Get well soon.`
+    };
+
+    const licenseSettings = {
+      dlNumber: pharmacyForm.dlNumber.trim() || 'DL-TN-102-123456',
+      dlExpiry: '2028-12-31',
+      gstin: pharmacyForm.gstin.trim() || '33AAAAA0000A1Z5',
+      pharmacistRegNo: pharmacyForm.pharmacistRegNo.trim() || 'PRN-2024-8890',
+      dlFile: 'Drug_License_Form20_21.pdf',
+      gstFile: 'GST_Registration_Certificate.pdf',
+      regFile: 'Pharmacy_Council_Registration.pdf'
+    };
+
+    localStorage.setItem('sree_manju_business_settings', JSON.stringify(businessSettings));
+    localStorage.setItem('sree_manju_license_info', JSON.stringify(licenseSettings));
+
+    finalizeRegistration();
+  };
+
+  const finalizeRegistration = async () => {
+    setRegError('');
+    setIsSubmitting(true);
+    try {
+      await register({
+        role: regForm.role,
+        firstName: regForm.firstName.trim(),
+        lastName: regForm.lastName.trim(),
+        email: regForm.email.trim(),
+        mobile: regForm.mobile.trim(),
+        password: regForm.password
+      });
+
+      recordRegisteredUser({
+        role: regForm.role,
+        firstName: regForm.firstName.trim(),
+        lastName: regForm.lastName.trim(),
+        email: regForm.email.trim(),
+        mobile: regForm.mobile.trim()
+      });
+
+      const fullName = `${regForm.firstName.trim()} ${regForm.lastName.trim()}`;
+      setRole(regForm.role);
+      setUsername(regForm.email.trim());
+      setPassword('');
+      setResetSuccessBanner(`✅ Account created for ${fullName}! Sign in with the password you just set.`);
+      setRegStep(1);
+      switchTab('login');
+      setRegForm({
+        role: 'primary_owner',
+        firstName: '',
+        lastName: '',
+        email: '',
+        mobile: '',
+        password: '',
+        confirmPassword: ''
+      });
+    } catch (err) {
+      setRegError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetFieldErrors({});
+
+    if (!resetEmail.trim()) {
+      setResetFieldErrors({ email: 'Registered email address is required.' });
+      setResetError('Email Address is required! Please enter your registered email address.');
+      return;
+    } else if (!resetEmail.includes('@')) {
+      setResetFieldErrors({ email: 'Enter a valid email address.' });
+      setResetError('Invalid email format! Please enter a valid email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await requestPasswordReset(resetEmail.trim());
+    } catch (err) {
+      // The backend always returns success here regardless of whether the
+      // email exists, so a thrown error means something else went wrong
+      // (network, etc.) - still show the generic message either way so we
+      // never confirm or deny an account's existence.
+    } finally {
+      setIsSubmitting(false);
+      setResetSent(true);
+    }
+  };
+
+  const handleSetNewPassword = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    const errors = {};
+
+    if (!resetForm.password) {
+      errors.password = 'New password is required.';
+    } else {
+      const pwdCheck = validatePasswordComplexity(resetForm.password);
+      if (!pwdCheck.isValid) {
+        errors.password = pwdCheck.error;
+      }
+    }
+
+    if (!resetForm.confirmPassword) {
+      errors.confirmPassword = 'Confirm password is required.';
+    } else if (resetForm.password !== resetForm.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setResetFieldErrors(errors);
+      if (errors.password) {
+        setResetError(errors.password.includes('required') ? 'New password is required! Please enter a password.' : errors.password);
+      } else if (errors.confirmPassword) {
+        setResetError('Confirm Password is required! Please confirm your new password.');
+      }
+      return;
+    }
+
+    if (!resetToken) {
+      setResetError('This reset link is missing or invalid. Please request a new one.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await confirmPasswordReset(resetToken, resetForm.password);
+      setUsername('');
+      setPassword('');
+      setResetSuccessBanner('✅ Password updated successfully! You can now sign in with your new password.');
+      window.history.replaceState({ viewMode: 'login' }, '', window.location.pathname);
+      setViewMode('login');
+      setResetForm({ password: '', confirmPassword: '' });
+      setResetSent(false);
+    } catch (err) {
+      setResetError(err.message || 'This reset link is invalid or has expired. Please request a new one.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const [bgTheme, setBgTheme] = useState('medical'); // 'medical', 'ocean', 'dark'
+
+  const bgStyles = {
+    medical: 'linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #047857 100%)',
+    ocean: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #0284c7 100%)',
+    dark: 'linear-gradient(135deg, #090d16 0%, #1e293b 50%, #0f172a 100%)'
+  };
+
+  const primaryOwnerCount = (registeredUsers || []).filter(u => u.role === 'primary_owner').length;
+  const coOwnerCount = (registeredUsers || []).filter(u => u.role === 'co_owner').length;
+  const staffCount = (registeredUsers || []).filter(u => u.role === 'staff').length;
+
+  const passLengthOk = regForm.password.length >= 8 && regForm.password.length <= 16;
+  const passUpperOk = /[A-Z]/.test(regForm.password);
+  const passLowerOk = /[a-z]/.test(regForm.password);
+  const passNumberOk = /[0-9]/.test(regForm.password);
+  const passSpecialOk = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(regForm.password);
+
+  const loginPassLengthOk = password.length >= 8 && password.length <= 16;
+  const loginPassUpperOk = /[A-Z]/.test(password);
+  const loginPassLowerOk = /[a-z]/.test(password);
+  const loginPassNumberOk = /[0-9]/.test(password);
+  const loginPassSpecialOk = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(password);
+
+  const resetPassLengthOk = resetForm.password.length >= 8 && resetForm.password.length <= 16;
+  const resetPassUpperOk = /[A-Z]/.test(resetForm.password);
+  const resetPassLowerOk = /[a-z]/.test(resetForm.password);
+  const resetPassNumberOk = /[0-9]/.test(resetForm.password);
+  return (
+    <div 
+      className="login-wrapper"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: bgStyles[bgTheme],
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '24px 20px',
+        transition: 'background 0.5s ease'
+      }}
+    >
+      {/* Background Ambient Glow Accents */}
+      <div style={{
+        position: 'absolute', top: '-100px', left: '-100px', width: '450px', height: '450px',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.35) 0%, rgba(0,0,0,0) 70%)',
+        filter: 'blur(50px)', pointerEvents: 'none'
+      }}></div>
+      <div style={{
+        position: 'absolute', bottom: '-100px', right: '-100px', width: '500px', height: '500px',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(0,0,0,0) 70%)',
+        filter: 'blur(60px)', pointerEvents: 'none'
+      }}></div>
+
+      {/* Clean Box-by-Box Grid Logo Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+        gap: '20px',
+        padding: '24px',
+        opacity: 0.14,
+        pointerEvents: 'none',
+        overflow: 'hidden',
+        zIndex: 1
+      }}>
+        {Array.from({ length: 35 }).map((_, idx) => (
+          <div key={idx} style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100px',
+            backgroundColor: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '16px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+            padding: '12px'
+          }}>
+            <img 
+              src={logoImg} 
+              alt="Pharmacy Logo" 
+              style={{ 
+                width: '60px', 
+                height: '60px', 
+                objectFit: 'contain'
+              }} 
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Main Glassmorphism Card */}
+      <div 
+        className="card login-card" 
+        style={{
+          width: viewMode === 'welcome' ? '540px' : '480px',
+          maxWidth: '95vw',
+          padding: viewMode === 'welcome' ? '40px 36px' : '36px',
+          borderRadius: '24px',
+          backgroundColor: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.3)',
+          position: 'relative',
+          zIndex: 10,
+          transition: 'all 0.3s ease'
+        }}
+      >
+        
+        {/* VIEW 0: WELCOME LANDING PAGE */}
+        {viewMode === 'welcome' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            
+            {/* Top Welcome Pill Badge */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'rgba(14, 165, 233, 0.12)',
+              border: '1px solid rgba(14, 165, 233, 0.3)',
+              color: '#0284c7',
+              fontSize: '12px',
+              fontWeight: '700',
+              padding: '6px 16px',
+              borderRadius: '20px',
+              marginBottom: '22px',
+              letterSpacing: '0.4px'
+            }}>
+              <Sparkles size={14} color="#0284c7" /> WELCOME TO SREE MANJU PHARMACY
+            </div>
+
+            {/* Glowing Logo Frame */}
+            <div style={{
+              position: 'relative',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                position: 'absolute',
+                inset: '-12px',
+                borderRadius: '32px',
+                background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.6), rgba(16, 185, 129, 0.6))',
+                filter: 'blur(16px)',
+                opacity: 0.85
+              }}></div>
+              <img 
+                src={logoImg} 
+                alt="Sree Manju Pharmacy Logo" 
+                style={{
+                  position: 'relative',
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '22px',
+                  objectFit: 'contain',
+                  boxShadow: '0 12px 24px -6px rgba(0, 0, 0, 0.25)',
+                  backgroundColor: '#ffffff',
+                  padding: '6px',
+                  border: '2px solid rgba(255, 255, 255, 0.9)'
+                }}
+              />
+            </div>
+
+            {/* Slogan & Title */}
+            <h1 className="login-title" style={{
+              fontSize: '28px',
+              fontWeight: '800',
+              color: 'var(--text-primary)',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.5px'
+            }}>
+              Sree Manju Pharmacy
+            </h1>
+
+            <p className="login-subtitle" style={{
+              fontSize: '15px',
+              fontWeight: '700',
+              color: '#0284c7',
+              margin: '0 0 14px 0',
+              lineHeight: '1.4'
+            }}>
+              "Your Trusted Partner in Health, Precision Pharmacy & POS Care"
+            </p>
+
+
+
+
+
+            {/* Enter System Button */}
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                switchTab('login');
+              }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                fontSize: '15.5px',
+                fontWeight: '700',
+                borderRadius: '12px',
+                justifyContent: 'center',
+                boxShadow: '0 10px 20px -5px rgba(2, 132, 199, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Get Started &amp; Sign In <ArrowRight size={18} />
+            </button>
+
+          </div>
+        )}
+
+        {/* HEADER BRANDING (For Login / Register / Forgot Password) */}
+        {viewMode !== 'welcome' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <button 
+                type="button"
+                onClick={() => switchTab('welcome')}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12.5px', fontWeight: '700',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0
+                }}
+              >
+                <ArrowLeft size={14} /> Back to Welcome Page
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+              <img src={logoImg} alt="Sree Manju Pharmacy Logo" style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'contain', marginBottom: '10px', boxShadow: '0 8px 16px -4px rgba(14, 165, 233, 0.2)' }} />
+              <h1 className="login-title" style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Sree Manju Pharmacy</h1>
+              <p className="login-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>Pharmacy Management &amp; POS System</p>
+            </div>
+          </>
+        )}
+
+        {/* Success Banner for Password Reset Redirect */}
+        {viewMode === 'login' && resetSuccessBanner && (
+          <div style={{
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #86efac',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            marginBottom: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#166534',
+            fontSize: '13px',
+            fontWeight: '600',
+            animation: 'fadeIn 0.2s ease'
+          }}>
+            <CheckCircle2 size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
+            <div style={{ flex: 1, lineHeight: '1.4' }}>{resetSuccessBanner}</div>
+          </div>
+        )}
+
+        {/* Inline Error Banner for Login */}
+        {viewMode === 'login' && errorMessage && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            marginBottom: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#991b1b',
+            fontSize: '13px',
+            fontWeight: '600',
+            animation: 'fadeIn 0.2s ease'
+          }}>
+            <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#dc2626', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800', flexShrink: 0 }}>!</div>
+            <div style={{ flex: 1, lineHeight: '1.4' }}>{errorMessage}</div>
+          </div>
+        )}
+
+        {/* Inline Error Banner for Register */}
+        {viewMode === 'register' && regError && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            marginBottom: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#991b1b',
+            fontSize: '13px',
+            fontWeight: '600'
+          }}>
+            <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#dc2626', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800', flexShrink: 0 }}>!</div>
+            <div style={{ flex: 1, lineHeight: '1.4' }}>{regError}</div>
+          </div>
+        )}
+
+        {/* MODE 1: LOGIN FORM */}
+        {viewMode === 'login' && (
+          <form onSubmit={handleLogin} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* Role Selection */}
+            <div>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Select System Role</label>
+              <select className="form-input" style={{ fontWeight: '600', cursor: 'pointer' }} value={role} onChange={(e) => handleRoleChange(e.target.value)}>
+                <option value="primary_owner">👨‍⚕️ Primary Owner (Admin)</option>
+                <option value="co_owner">🤝 Co-Owner (Partner)</option>
+                <option value="staff">💊 Staff / Pharmacist</option>
+              </select>
+            </div>
+
+            {/* Username / Email */}
+            <div>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Username / Email / Mobile *</label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: loginFieldErrors.username ? '#dc2626' : 'var(--text-secondary)' }} />
+                <input 
+                  type="text" 
+                  name="login_username_field"
+                  autoComplete="off"
+                  className="form-input" 
+                  placeholder="Enter Username or Email" 
+                  style={{ 
+                    paddingLeft: '38px', 
+                    textTransform: 'lowercase', 
+                    backgroundColor: loginFieldErrors.username ? '#fff5f5' : '',
+                    border: loginFieldErrors.username ? '1px solid #fca5a5' : '' 
+                  }}
+                  required
+                  value={username}
+                  onChange={(e) => { 
+                    setUsername(e.target.value.toLowerCase()); 
+                    setErrorMessage(''); 
+                    if (loginFieldErrors.username) setLoginFieldErrors({ ...loginFieldErrors, username: '' });
+                  }}
+                />
+              </div>
+              {loginFieldErrors.username && <span style={{ color: '#dc2626', fontSize: '11.5px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {loginFieldErrors.username}</span>}
+            </div>
+            
+            {/* Password */}
+            <div>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Password *</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: loginFieldErrors.password ? '#dc2626' : 'var(--text-secondary)' }} />
+                <input 
+                  type={showLoginPassword ? 'text' : 'password'} 
+                  name="login_password_field"
+                  autoComplete="new-password"
+                  className="form-input" 
+                  placeholder="Enter Password" 
+                  style={{ 
+                    paddingLeft: '38px', 
+                    paddingRight: '38px',
+                    backgroundColor: loginFieldErrors.password ? '#fff5f5' : '',
+                    border: loginFieldErrors.password ? '1px solid #fca5a5' : '' 
+                  }}
+                  required
+                  value={password}
+                  onChange={(e) => { 
+                    setPassword(e.target.value); 
+                    setErrorMessage(''); 
+                    if (loginFieldErrors.password) setLoginFieldErrors({ ...loginFieldErrors, password: '' });
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '10px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0
+                  }}
+                  title={showLoginPassword ? 'Hide Password' : 'Show Password'}
+                >
+                  {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {loginFieldErrors.password && <span style={{ color: '#dc2626', fontSize: '11.5px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {loginFieldErrors.password}</span>}
+
+              {/* Forgot Password Link (Below Password Field) */}
+              <div style={{ textAlign: 'right', marginTop: '6px' }}>
+                <span 
+                  style={{ fontSize: '12px', color: 'var(--primary-color)', cursor: 'pointer', fontWeight: '600', textDecoration: 'underline' }}
+                  onClick={() => switchTab('forgot')}
+                >
+                  Forgot Password?
+                </span>
+              </div>
+
+              {/* Live Password Requirements Checklist for Login (Displays dynamically only when typing) */}
+              {password && (
+                <div style={{ backgroundColor: '#f8fafc', border: `1px solid ${loginPassLengthOk && loginPassUpperOk && loginPassLowerOk && loginPassNumberOk && loginPassSpecialOk ? '#86efac' : '#fca5a5'}`, padding: '10px 12px', borderRadius: '8px', fontSize: '11.5px', marginTop: '8px', animation: 'fadeIn 0.2s ease' }}>
+                  <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>🔒 Password Requirements:</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: loginPassLengthOk ? '#16a34a' : '#dc2626' }}>
+                      {password.length} / 16 chars
+                    </span>
+                  </div>
+                  <div className="pass-req-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                    <span style={{ color: loginPassLengthOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {loginPassLengthOk ? '✓ 8-16 Length OK' : '✗ Need 8-16 Chars'}
+                    </span>
+                    <span style={{ color: loginPassUpperOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {loginPassUpperOk ? '✓ Uppercase (A-Z)' : '✗ Missing Uppercase'}
+                    </span>
+                    <span style={{ color: loginPassLowerOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {loginPassLowerOk ? '✓ Lowercase (a-z)' : '✗ Missing Lowercase'}
+                    </span>
+                    <span style={{ color: loginPassNumberOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {loginPassNumberOk ? '✓ Number (0-9)' : '✗ Missing Number'}
+                    </span>
+                    <span style={{ color: loginPassSpecialOk ? '#16a34a' : '#dc2626', fontWeight: '700', gridColumn: 'span 2' }}>
+                      {loginPassSpecialOk ? '✓ Special Char (!@#$%^&*)' : '✗ Missing Special Character'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '4px', padding: '11px', fontWeight: '700', fontSize: '15px', borderRadius: '8px', opacity: isSubmitting ? 0.7 : 1 }}>
+              {isSubmitting ? 'Signing in…' : (<>Secure Login <Shield size={18} style={{ marginLeft: '8px' }} /></>)}
+            </button>
+
+            {/* Quick Register Button Prompt */}
+          </form>
+        )}
+
+        {/* MODE 3: FORGOT PASSWORD */}
+        {viewMode === 'forgot' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* Inline Error Alert Banner for Forgot Password */}
+            {resetError && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fca5a5',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#991b1b',
+                fontSize: '13px',
+                fontWeight: '600',
+                animation: 'fadeIn 0.2s ease'
+              }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#dc2626', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800', flexShrink: 0 }}>!</div>
+                <div style={{ flex: 1, lineHeight: '1.4' }}>{resetError}</div>
+              </div>
+            )}
+
+            {!resetSent ? (
+              <form onSubmit={handleResetPassword} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Registered Email or 10-Digit Mobile Number *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: resetFieldErrors.email ? '#dc2626' : 'var(--text-secondary)' }} />
+                    <input 
+                      type="text" 
+                      name="forgot_email_field"
+                      autoComplete="off"
+                      className="form-input" 
+                      placeholder="enter registered email or mobile number" 
+                      style={{ 
+                        paddingLeft: '38px',
+                        backgroundColor: resetFieldErrors.email ? '#fff5f5' : '',
+                        border: resetFieldErrors.email ? '1px solid #fca5a5' : ''
+                      }}
+                      required
+                      value={resetEmail}
+                      onChange={(e) => {
+                        setResetEmail(e.target.value.toLowerCase());
+                        setResetError('');
+                        if (resetFieldErrors.email) setResetFieldErrors({ ...resetFieldErrors, email: '' });
+                      }}
+                    />
+                  </div>
+                  {resetFieldErrors.email && <span style={{ color: '#dc2626', fontSize: '11.5px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {resetFieldErrors.email}</span>}
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                    Password reset works for all owner and staff members using their registered email or mobile number.
+                  </p>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontWeight: '700', fontSize: '14px', borderRadius: '8px', opacity: isSubmitting ? 0.7 : 1 }}>
+                    {isSubmitting ? 'Sending…' : (<>Send Reset Link <Mail size={16} style={{ marginLeft: '6px' }} /></>)}
+                  </button>
+                  <button type="button" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '13px' }} onClick={() => switchTab('login')}>
+                    <ArrowLeft size={14} style={{ marginRight: '4px' }} /> Back to Sign In
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Green Alert Banner */}
+                <div style={{
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #86efac',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  color: '#166534',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  animation: 'fadeIn 0.2s ease'
+                }}>
+                  <CheckCircle2 size={20} style={{ color: '#16a34a', flexShrink: 0 }} />
+                  <div>Password reset link dispatched to <strong>{resetEmail}</strong>!</div>
+                </div>
+
+                {/* Real reset requires the emailed link (?reset_token=...) - no
+                    in-app shortcut here anymore, since that shortcut let
+                    anyone reset any account's password just by typing their
+                    email. */}
+                <div style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '16px', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: '700', fontSize: '13px', color: 'var(--primary-color)' }}>
+                    <KeyRound size={18} /> Check your inbox
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    If that address is registered, we've emailed a reset link. Open it on this device to set a new password — the link expires in 30 minutes.
+                  </p>
+                </div>
+
+                <button type="button" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '13px' }} onClick={() => switchTab('login')}>
+                  <ArrowLeft size={14} style={{ marginRight: '4px' }} /> Back to Sign In
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODE 4: RESET NEW PASSWORD FORM */}
+        {viewMode === 'reset_new_password' && (
+          <form onSubmit={handleSetNewPassword} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <KeyRound size={20} /> Create New Password
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                {resetToken ? 'Choose a new password for your account.' : 'This page only works from the link in your reset email.'}
+              </p>
+            </div>
+
+            {/* Inline Error Alert Banner for Reset Password */}
+            {resetError && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fca5a5',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#991b1b',
+                fontSize: '13px',
+                fontWeight: '600',
+                animation: 'fadeIn 0.2s ease'
+              }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#dc2626', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800', flexShrink: 0 }}>!</div>
+                <div style={{ flex: 1, lineHeight: '1.4' }}>{resetError}</div>
+              </div>
+            )}
+
+            {/* New Password */}
+            <div>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>New Password *</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: resetFieldErrors.password ? '#dc2626' : 'var(--text-secondary)' }} />
+                <input 
+                  type={showResetPass ? 'text' : 'password'} 
+                  name="reset_new_password_field"
+                  autoComplete="new-password"
+                  className="form-input" 
+                  placeholder="Enter New Password" 
+                  style={{ 
+                    paddingLeft: '38px',
+                    paddingRight: '38px',
+                    backgroundColor: resetFieldErrors.password ? '#fff5f5' : '',
+                    border: resetFieldErrors.password ? '1px solid #fca5a5' : ''
+                  }}
+                  required
+                  value={resetForm.password}
+                  onChange={(e) => {
+                    setResetForm({ ...resetForm, password: e.target.value });
+                    setResetError('');
+                    if (resetFieldErrors.password) setResetFieldErrors({ ...resetFieldErrors, password: '' });
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResetPass(!showResetPass)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '10px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0
+                  }}
+                  title={showResetPass ? 'Hide Password' : 'Show Password'}
+                >
+                  {showResetPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {resetFieldErrors.password && <span style={{ color: '#dc2626', fontSize: '11.5px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {resetFieldErrors.password}</span>}
+
+              {/* Live Password Requirements Checklist for Reset (Displays dynamically only when typing) */}
+              {resetForm.password && (
+                <div style={{ backgroundColor: '#f8fafc', border: `1px solid ${resetPassLengthOk && resetPassUpperOk && resetPassLowerOk && resetPassNumberOk && resetPassSpecialOk ? '#86efac' : '#fca5a5'}`, padding: '10px 12px', borderRadius: '8px', fontSize: '11.5px', marginTop: '8px', animation: 'fadeIn 0.2s ease' }}>
+                  <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>🔒 Password Requirements:</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: resetPassLengthOk ? '#16a34a' : '#dc2626' }}>
+                      {resetForm.password.length} / 16 chars
+                    </span>
+                  </div>
+                  <div className="pass-req-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                    <span style={{ color: resetPassLengthOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {resetPassLengthOk ? '✓ 8-16 Length OK' : '✗ Need 8-16 Chars'}
+                    </span>
+                    <span style={{ color: resetPassUpperOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {resetPassUpperOk ? '✓ Uppercase (A-Z)' : '✗ Missing Uppercase'}
+                    </span>
+                    <span style={{ color: resetPassLowerOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {resetPassLowerOk ? '✓ Lowercase (a-z)' : '✗ Missing Lowercase'}
+                    </span>
+                    <span style={{ color: resetPassNumberOk ? '#16a34a' : '#dc2626', fontWeight: '700' }}>
+                      {resetPassNumberOk ? '✓ Number (0-9)' : '✗ Missing Number'}
+                    </span>
+                    <span style={{ color: resetPassSpecialOk ? '#16a34a' : '#dc2626', fontWeight: '700', gridColumn: 'span 2' }}>
+                      {resetPassSpecialOk ? '✓ Special Char (!@#$%^&*)' : '✗ Missing Special Character'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm New Password */}
+            <div>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '13px' }}>Confirm New Password *</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: resetFieldErrors.confirmPassword ? '#dc2626' : 'var(--text-secondary)' }} />
+                <input 
+                  type={showResetConfirmPass ? 'text' : 'password'} 
+                  name="reset_confirm_password_field"
+                  autoComplete="new-password"
+                  className="form-input" 
+                  placeholder="Confirm New Password" 
+                  style={{ 
+                    paddingLeft: '38px',
+                    paddingRight: '38px',
+                    backgroundColor: resetFieldErrors.confirmPassword ? '#fff5f5' : '',
+                    border: resetFieldErrors.confirmPassword ? '1px solid #fca5a5' : ''
+                  }}
+                  required
+                  value={resetForm.confirmPassword}
+                  onChange={(e) => {
+                    setResetForm({ ...resetForm, confirmPassword: e.target.value });
+                    setResetError('');
+                    if (resetFieldErrors.confirmPassword) setResetFieldErrors({ ...resetFieldErrors, confirmPassword: '' });
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirmPass(!showResetConfirmPass)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '10px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0
+                  }}
+                  title={showResetConfirmPass ? 'Hide Password' : 'Show Password'}
+                >
+                  {showResetConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {resetFieldErrors.confirmPassword && <span style={{ color: '#dc2626', fontSize: '11.5px', fontWeight: '600', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {resetFieldErrors.confirmPassword}</span>}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+              <button type="submit" disabled={isSubmitting || !resetToken} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontWeight: '700', fontSize: '14px', borderRadius: '8px', opacity: (isSubmitting || !resetToken) ? 0.7 : 1 }}>
+                {isSubmitting ? 'Updating…' : (<>Update Password &amp; Return to Login <CheckCircle2 size={18} style={{ marginLeft: '6px' }} /></>)}
+              </button>
+              <button type="button" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '10px', fontSize: '13px' }} onClick={() => switchTab('login')}>
+                <ArrowLeft size={14} style={{ marginRight: '4px' }} /> Cancel &amp; Back to Sign In
+              </button>
+            </div>
+          </form>
+        )}
+
+      </div>
+
+      {/* Background Theme Selector Pills */}
+      <div style={{
+        marginTop: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        padding: '6px 14px',
+        borderRadius: '30px',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        zIndex: 10
+      }}>
+        <span style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.7)' }}>Background Color:</span>
+        <button 
+          type="button" 
+          onClick={() => setBgTheme('medical')}
+          style={{
+            background: 'none', border: bgTheme === 'medical' ? '2px solid #10b981' : '1px solid transparent',
+            color: 'white', fontSize: '11px', fontWeight: '600', cursor: 'pointer', padding: '3px 8px', borderRadius: '12px',
+            backgroundColor: bgTheme === 'medical' ? 'rgba(16, 185, 129, 0.25)' : 'transparent'
+          }}
+        >
+          🌿 Emerald Health
+        </button>
+        <button 
+          type="button" 
+          onClick={() => setBgTheme('ocean')}
+          style={{
+            background: 'none', border: bgTheme === 'ocean' ? '2px solid #0284c7' : '1px solid transparent',
+            color: 'white', fontSize: '11px', fontWeight: '600', cursor: 'pointer', padding: '3px 8px', borderRadius: '12px',
+            backgroundColor: bgTheme === 'ocean' ? 'rgba(2, 132, 199, 0.25)' : 'transparent'
+          }}
+        >
+          🌊 Ocean Indigo
+        </button>
+        <button 
+          type="button" 
+          onClick={() => setBgTheme('dark')}
+          style={{
+            background: 'none', border: bgTheme === 'dark' ? '2px solid #94a3b8' : '1px solid transparent',
+            color: 'white', fontSize: '11px', fontWeight: '600', cursor: 'pointer', padding: '3px 8px', borderRadius: '12px',
+            backgroundColor: bgTheme === 'dark' ? 'rgba(148, 163, 184, 0.25)' : 'transparent'
+          }}
+        >
+          🌃 Midnight Dark
+        </button>
+      </div>
+
+    </div>
+  );
+}

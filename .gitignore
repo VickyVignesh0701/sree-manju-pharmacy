@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Production deployed static copies in root
+/assets/
+/favicon.svg
+/icons.svg
+/logo.png
+/sm_logo.png
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment / secrets - never commit real credentials
+api/.env
+.env
+.env.local
+
+# PHP dependencies (installed via composer install)
+vendor/
